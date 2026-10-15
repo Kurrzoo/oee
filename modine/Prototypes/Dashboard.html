@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modine Performance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- GSAP Animation Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<style>
+  /* ============================================================
+     MODINE PERFORMANCE — layout structure (dashboard: table + sidebar panel)
+     ============================================================ */
+
+  :root{
+    --bg:#eef1f3; --surface:#ffffff; --border:#d7dbe2; --border-strong:#b9c0c9;
+    --text:#1a2230; --text-secondary:#5b6472; --text-muted:#8a92a0;
+    --accent:#2c5f8a; --accent-dark:#1f4a6c; --accent-bg:#e5eef5;
+    --actief:#2f8f5b; --actief-bg:#e6f3ec;
+    --pauze:#b97417; --pauze-bg:#faf1de;
+    --stilstand:#b03a26; --stilstand-bg:#f9e7e3;
+    --afgerond:#5b6472; --afgerond-bg:#eaecef;
+    --danger:#b03a26; --radius:8px; --radius-sm:4px;
+    --font-sans:'IBM Plex Sans',system-ui,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{ font-family:var(--font-sans); background:var(--bg); color:var(--text); font-size:14px; line-height:1.5; }
+  button, input, select{ font-family:inherit; font-size:14px; color:inherit; }
+  button:focus-visible, input:focus-visible, select:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+  header.topbar{
+    background:var(--surface); border-bottom:1px solid var(--border); padding:0 28px;
+    display:flex; align-items:center; justify-content:space-between; height:60px;
+  }
+  .brand{ font-weight:600; font-size:15px; }
+  .topbar-right{ display:flex; align-items:center; gap:16px; }
+  .search{
+    padding:9px 12px; border:1px solid var(--border-strong); border-radius:var(--radius-sm);
+    background:var(--bg); width:260px; transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .search:focus{ box-shadow:0 0 0 3px var(--accent-bg); border-color:var(--accent); outline:none; background:#fff; }
+
+  .btn{
+    border:1px solid var(--border-strong); background:var(--surface); color:var(--text);
+    padding:8px 16px; border-radius:var(--radius-sm); cursor:pointer; font-weight:500;
+    transition:transform .12s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover{ background:var(--bg); transform:scale(1.03); box-shadow:0 2px 4px rgba(0,0,0,0.04); }
+  .btn:active{ transform:scale(0.97); }
+  .btn-primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .btn-primary:hover{ background:var(--accent-dark); border-color:var(--accent-dark); }
+  .btn-danger{ background:var(--danger); border-color:var(--danger); color:#fff; }
+  .btn-danger:hover{ background:#8f2e1d; border-color:#8f2e1d; }
+  .btn-sm{ padding:6px 12px; font-size:13px; }
+
+  .layout{ display:flex; }
+  .content{ flex:1; padding:24px 28px; min-width:0; }
+
+  .filters{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .filters select{ padding:7px 10px; border:1px solid var(--border-strong); border-radius:var(--radius-sm); background:var(--surface); font-size:13px; }
+  .count{ font-size:12px; color:var(--text-muted); margin-bottom:10px; display:flex; justify-content:space-between; }
+
+  table.grid{ width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  table.grid th{ text-align:left; font-size:11px; color:var(--text-muted); font-weight:600; padding:10px 14px; border-bottom:1px solid var(--border); background:#f7f8f9; text-transform:uppercase; letter-spacing:0.04em; }
+  table.grid td{ padding:10px 14px; border-bottom:1px solid var(--border); font-size:13px; }
+  table.grid tr:last-child td{ border-bottom:none; }
+  table.grid tbody tr{ cursor:pointer; transition:background-color .15s ease; }
+  table.grid tbody tr:hover{ background:var(--bg); }
+  table.grid tbody tr.selected{ background:var(--accent-bg); }
+  table.grid tbody tr.just-saved{ animation:savedPulse 1.2s ease; }
+  td.mono{ font-family:var(--font-mono); font-size:12px; color:var(--text-secondary); }
+  td.sub{ font-size:12px; color:var(--text-secondary); }
+
+  .badge{ display:inline-block; padding:4px 10px; border-radius:99px; font-size:12px; font-weight:600; }
+  .badge.s-started{ background:var(--actief-bg); color:var(--actief); }
+  .badge.s-paused{ background:var(--pauze-bg); color:var(--pauze); }
+  .badge.s-downtime{ background:var(--stilstand-bg); color:var(--stilstand); }
+  .badge.s-resumed{ background:var(--actief-bg); color:var(--actief); }
+  .badge.s-completed{ background:var(--afgerond-bg); color:var(--afgerond); }
+
+  .status-dot{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+  .status-dot.s-started, .status-dot.s-resumed{ background:var(--actief); }
+  .status-dot.s-paused{ background:var(--pauze); }
+  .status-dot.s-downtime{ background:var(--stilstand); }
+  .status-dot.s-completed{ background:var(--afgerond); }
+  .current-status-line{ font-size:14px; font-weight:500; color:var(--text); margin-bottom:12px; }
+
+  .empty{ border:2px dashed var(--border-strong); border-radius:var(--radius); padding:48px 20px; text-align:center; color:var(--text-secondary); background:var(--surface); }
+  .empty p{ margin:0 0 16px; font-size:15px; }
+
+  .panel{
+    width:440px; flex:none; background:var(--surface); border-left:1px solid var(--border);
+    padding:24px 26px; overflow-y:auto; height:calc(100vh - 60px); position:sticky; top:60px;
+  }
+  .panel-empty{ color:var(--text-muted); font-size:13px; padding-top:48px; text-align:center; }
+  .panel-head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px; }
+  .panel-title{ font-size:17px; font-weight:600; }
+  .panel-close{ border:none; background:none; font-size:20px; cursor:pointer; color:var(--text-secondary); transition:transform .12s ease; }
+  .panel-close:hover{ transform:scale(1.15); color:var(--text); }
+
+  fieldset{ border:none; padding:0; margin:0 0 24px; }
+  legend{ font-size:13px; font-weight:600; color:var(--text-secondary); padding:0 0 10px; width:100%; border-bottom:1px solid var(--border); margin-bottom:14px; }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .field{ display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+  .field label{ font-size:12px; font-weight:500; color:var(--text-secondary); }
+  .field label .req{ color:var(--danger); }
+  .field input, .field select{
+    padding:8px 10px; border:1px solid var(--border-strong); border-radius:var(--radius-sm); background:#fff;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .field input:focus, .field select:focus{ box-shadow:0 0 0 3px var(--accent-bg); border-color:var(--accent); outline:none; }
+
+  .status-picker{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; margin-bottom:10px; }
+  .status-btn{
+    padding:6px 14px; border-radius:99px; border:1px solid var(--border-strong); background:#fff;
+    cursor:pointer; font-weight:500; font-size:13px;
+    transition:transform .12s ease, background-color .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .status-btn:hover{ transform:scale(1.06); }
+  .status-btn:active{ transform:scale(0.96); }
+  .status-btn.on.s-started, .status-btn.on.s-resumed{ background:var(--actief); border-color:var(--actief); color:#fff; }
+  .status-btn.on.s-paused{ background:var(--pauze); border-color:var(--pauze); color:#fff; }
+  .status-btn.on.s-downtime{ background:var(--stilstand); border-color:var(--stilstand); color:#fff; }
+  .status-btn.on.s-completed{ background:var(--afgerond); border-color:var(--afgerond); color:#fff; }
+  .downtime-box{ padding:12px; border:1px solid var(--stilstand); background:var(--stilstand-bg); border-radius:var(--radius-sm); margin-bottom:12px; }
+
+  .repeat-row{ display:grid; grid-template-columns:1fr auto; gap:8px; align-items:start; margin-bottom:10px; padding:10px; border:1px solid var(--border); border-radius:var(--radius-sm); }
+  .repeat-row .field{ margin-bottom:8px; }
+  .row-remove{
+    border:1px solid var(--border-strong); background:#fff; border-radius:var(--radius-sm); height:34px; width:34px;
+    cursor:pointer; color:var(--text-secondary); transition:transform .12s ease, background-color .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .row-remove:hover{ color:var(--danger); border-color:var(--danger); background:#fff5f5; transform:scale(1.06); }
+  .add-row-btn{
+    border:1px dashed var(--border-strong); background:none; border-radius:var(--radius-sm);
+    padding:8px 12px; cursor:pointer; color:var(--text-secondary); font-weight:500; width:100%; text-align:center; font-size:13px;
+    transition:border-color .15s ease, color .15s ease, background-color .15s ease;
+  }
+  .add-row-btn:hover{ border-color:var(--accent); color:var(--accent); background:var(--accent-bg); }
+
+  .mini-table{ width:100%; border-collapse:collapse; font-size:13px; background:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; }
+  .mini-table th{ text-align:left; font-weight:600; color:var(--text-secondary); font-size:11px; padding:6px 10px; border-bottom:1px solid var(--border); background:#f4f6f8; }
+  .mini-table td{ padding:6px 10px; border-bottom:1px solid var(--border); }
+  .mini-table tr:last-child td{ border-bottom:none; }
+  .mini-empty{ font-size:13px; color:var(--text-muted); font-style:italic; }
+  .panel-section h3{ font-size:12px; color:var(--text-secondary); font-weight:600; margin:16px 0 8px; text-transform:uppercase; letter-spacing:0.04em; }
+
+  .panel-actions{ display:flex; gap:8px; margin-top:20px; padding-top:20px; border-top:1px solid var(--border); }
+  .form-error-summary{
+    color:var(--danger); font-size:13px; margin:12px 0; padding:12px 14px;
+    background:var(--stilstand-bg); border-left:3px solid var(--danger); border-radius:var(--radius-sm);
+  }
+  .form-error-summary ul{ margin:0; padding-left:18px; }
+  .form-error-summary li{ margin:2px 0; }
+
+  .dialog-overlay{
+    position:fixed; inset:0; background:rgba(20,26,36,0.45); display:flex; align-items:center;
+    justify-content:center; z-index:20; padding:20px;
+  }
+  .dialog-card{
+    background:var(--surface); border-radius:var(--radius); padding:24px; max-width:360px; width:100%;
+    box-shadow:0 12px 28px rgba(26,34,48,0.18);
+  }
+  .dialog-title{ font-size:16px; font-weight:600; margin-bottom:8px; }
+  .dialog-body{ font-size:13px; color:var(--text-secondary); margin-bottom:20px; }
+  .dialog-actions{ display:flex; justify-content:flex-end; gap:8px; }
+
+  @keyframes savedPulse{ 0%{ background-color:var(--actief-bg); } 100%{ background-color:transparent; } }
+
+  @media (max-width:900px){
+    .layout{ flex-direction:column; }
+    .panel{ width:100%; position:static; height:auto; border-left:none; border-top:1px solid var(--border); }
+    .field-row{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Modine Performance</div>
+  <div class="topbar-right">
+    <input class="search" id="search-input" placeholder="Search by product, press line, oven or request" oninput="handleSearch(this.value)">
+    <button class="btn btn-primary" onclick="startNieuw()">+ New registration</button>
+  </div>
+</header>
+<div class="layout">
+  <div class="content">
+    <div class="filters">
+      <select id="filter-status" onchange="applyFilters()">
+        <option value="">All statuses</option>
+        <option value="started">Started</option>
+        <option value="paused">Paused</option>
+        <option value="downtime">Downtime</option>
+        <option value="resumed">Resumed</option>
+        <option value="completed">Completed</option>
+      </select>
+      <select id="filter-pressline" onchange="applyFilters()">
+        <option value="">All press lines</option>
+      </select>
+    </div>
+    <div class="count"><span id="row-count"></span><span>Newest first</span></div>
+    <div id="table-wrap"></div>
+  </div>
+  <div class="panel" id="panel"></div>
+</div>
+<div id="dialog-root"></div>
+
+<script>
+'use strict';
+
+const PICKLISTS = {
+  products: ['Radiator type A12','Intercooler B7','Oil cooler C4','Condenser D9','Charge air cooler E3'],
+  pressLines: ['Press Line 1','Press Line 2','Press Line 3'],
+  ovens: ['Oven 15','Oven 20','Iron Oven 20','Aluminum Oven 8'],
+  faultTypes: ['Material shortage','Press fault','Machine stop','Quality check','Maintenance','Setup error'],
+  downtimeReasons: ['Material shortage','Technical fault','Waiting for operator','Changeover','Maintenance','Other'],
+  valueNames: ['Good quantity','Reject quantity','Cycle time (sec)','Downtime (min)']
+};
+
+const STATUS_LABEL = { started:'Started', paused:'Paused', downtime:'Downtime', resumed:'Resumed', completed:'Completed' };
+const STATUS_ORDER = ['started','paused','downtime','resumed','completed'];
+
+let uidCounter = 1;
+let regCounter = 3;
+function uid(p){ return p + '-' + (uidCounter++); }
+function formatRegId(n){ return 'REG-' + String(n).padStart(3,'0'); }
+function nowTime(){ return new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}); }
+function todayISO(){
+  const now = new Date();
+  return now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+}
+function formatDate(iso){
+  if(!iso) return '—';
+  const parts = iso.split('-');
+  if(parts.length!==3) return iso;
+  return parts[2] + '-' + parts[1] + '-' + parts[0];
+}
+
+let state = {
+  regels: [
+    {
+      id: 'regel-1', regId: 'REG-001', aanvraag: '240817-01', datum: todayISO(),
+      product: 'Radiator type A12', persenrij: 'Press Line 1', oven: 'Oven 15', status: 'completed',
+      storingen: [{ id: 's-1', type: 'Press fault', tijdstip: '08:30', duur: '15' }],
+      productwaarden: [{ id: 'p-1', naam: 'Good quantity', waarde: '450' }, { id: 'p-2', naam: 'Reject quantity', waarde: '12' }],
+      statusHistorie: [
+        { status: 'started', tijd: '07:00', extra: '' },
+        { status: 'downtime', tijd: '08:30', extra: 'Press fault' },
+        { status: 'resumed', tijd: '08:45', extra: '' },
+        { status: 'completed', tijd: '15:00', extra: '' }
+      ],
+      aangemaakt: '07:00'
+    },
+    {
+      id: 'regel-2', regId: 'REG-002', aanvraag: '240817-02', datum: todayISO(),
+      product: 'Intercooler B7', persenrij: 'Press Line 2', oven: 'Oven 20', status: 'started',
+      storingen: [],
+      productwaarden: [{ id: 'p-3', naam: 'Good quantity', waarde: '210' }],
+      statusHistorie: [{ status: 'started', tijd: '09:15', extra: '' }],
+      aangemaakt: '09:15'
+    }
+  ],
+  selectedId: null, mode: null, formDraft: null, editingId: null, formErrors: [],
+  search: '', filterStatus: '', filterPressLine: '', highlightId: null, pendingDeleteId: null
+};
+
+function newDraft(){
+  return {
+    aanvraag:'', datum: todayISO(),
+    product:'', persenrij:'', oven:'', status:'started',
+    storingen: [], productwaarden: [],
+    statusHistorie: [{ status:'started', tijd: nowTime(), extra:'' }]
+  };
+}
+
+function val(sel){ const el=document.querySelector(sel); return el?el.value:undefined; }
+
+function syncDraftFromDOM(){
+  const d = state.formDraft;
+  if(!d) return;
+  if(document.getElementById('f-aanvraag')) d.aanvraag = val('#f-aanvraag') || '';
+  if(document.getElementById('f-datum')) d.datum = val('#f-datum') || d.datum;
+  if(document.getElementById('f-product')) d.product = val('#f-product');
+  if(document.getElementById('f-pressline')) d.persenrij = val('#f-pressline');
+  if(document.getElementById('f-oven')) d.oven = val('#f-oven');
+  if(d.status==='downtime' && document.getElementById('f-downtime-time')){
+    const last = d.statusHistorie[d.statusHistorie.length-1];
+    last.tijd = val('#f-downtime-time') || last.tijd;
+    last.extra = val('#f-downtime-reason') || '';
+  }
+  d.storingen.forEach(s=>{
+    if(document.getElementById('s-type-'+s.id)) s.type = val('#s-type-'+s.id);
+    if(document.getElementById('s-tijd-'+s.id)) s.tijdstip = val('#s-tijd-'+s.id)||'';
+    if(document.getElementById('s-duur-'+s.id)) s.duur = val('#s-duur-'+s.id)||'';
+  });
+  d.productwaarden.forEach(p=>{
+    if(document.getElementById('p-naam-'+p.id)) p.naam = val('#p-naam-'+p.id);
+    if(document.getElementById('p-waarde-'+p.id)) p.waarde = val('#p-waarde-'+p.id)||'';
+  });
+}
+
+function setStatus(s){
+  syncDraftFromDOM();
+  const d = state.formDraft;
+  if(d.status !== s){ 
+    d.status = s; 
+    d.statusHistorie.push({status:s, tijd:nowTime(), extra:''}); 
+  }
+  renderPanel();
+}
+function addStoring(){ 
+  syncDraftFromDOM(); 
+  state.formDraft.storingen.push({id:uid('s'), type:'', tijdstip:nowTime(), duur:''}); 
+  renderPanel(); 
+}
+function removeStoring(id){ syncDraftFromDOM(); state.formDraft.storingen = state.formDraft.storingen.filter(s=>s.id!==id); renderPanel(); }
+function addWaarde(){ syncDraftFromDOM(); state.formDraft.productwaarden.push({id:uid('p'),naam:'',waarde:''}); renderPanel(); }
+function removeWaarde(id){ syncDraftFromDOM(); state.formDraft.productwaarden = state.formDraft.productwaarden.filter(p=>p.id!==id); renderPanel(); }
+
+function validateDraft(d){
+  const errors=[];
+  if(!d.product) errors.push('Please select a product.');
+  if(!d.persenrij) errors.push('Please select a press line.');
+  if(!d.oven) errors.push('Please select an oven.');
+  if(d.status==='downtime'){
+    const last = d.statusHistorie[d.statusHistorie.length-1];
+    if(!last.tijd) errors.push('Please fill in the downtime time.');
+    if(!last.extra) errors.push('Please select a reason for downtime.');
+  }
+  d.storingen.forEach((s, idx)=>{
+    if(!s.type) errors.push(`Please select a fault type for fault ${idx+1}.`);
+    if(!s.tijdstip) errors.push(`Please enter a time for fault ${idx+1}.`);
+    if(s.duur === '' || s.duur === undefined || isNaN(Number(s.duur)) || Number(s.duur) < 0) errors.push(`Please enter a valid duration for fault ${idx+1}.`);
+  });
+  d.productwaarden.forEach((p, idx)=>{
+    if(!p.naam) errors.push(`Please select a name for product value ${idx+1}.`);
+    if(p.waarde === '' || p.waarde === undefined) errors.push(`Please fill in a value for product value ${idx+1}.`);
+  });
+  return errors;
+}
+
+function saveDraft(){
+  syncDraftFromDOM();
+  const d = state.formDraft;
+  const errors = validateDraft(d);
+  state.formErrors = errors;
+  if(errors.length){ renderPanel(); return; }
+  let savedId;
+  if(state.editingId){
+    savedId = state.editingId;
+    const idx = state.regels.findIndex(r=>r.id===state.editingId);
+    state.regels[idx] = Object.assign({}, state.regels[idx], d);
+  } else {
+    savedId = uid('regel');
+    state.regels.unshift(Object.assign({id:savedId, regId:formatRegId(regCounter++), aangemaakt:nowTime()}, d));
+  }
+  state.mode = 'detail'; state.selectedId = savedId; state.formDraft = null; state.editingId = null; state.formErrors = [];
+  state.highlightId = savedId;
+  renderTable(); renderPanel();
+  setTimeout(()=>{ state.highlightId = null; }, 1600);
+}
+
+function startNieuw(){
+  state.formDraft = newDraft(); state.editingId = null; state.formErrors = []; state.mode = 'form'; state.selectedId = null;
+  renderTable(); renderPanel();
+}
+function startBewerken(id){
+  const regel = state.regels.find(r=>r.id===id);
+  state.formDraft = JSON.parse(JSON.stringify(regel));
+  state.editingId = id; state.formErrors = []; state.mode = 'form';
+  renderPanel();
+}
+function selectRow(id){
+  state.selectedId = id; state.mode = 'detail'; state.formDraft = null;
+  renderTable(); renderPanel();
+}
+function closePanel(){
+  state.selectedId = null; state.mode = null; state.formDraft = null;
+  renderTable(); renderPanel();
+}
+function cancelForm(){
+  state.formDraft = null; state.editingId = null; state.formErrors = [];
+  state.mode = state.selectedId ? 'detail' : null;
+  renderPanel();
+}
+
+function askVerwijderRegel(id){ state.pendingDeleteId = id; renderDialog(); }
+function closeDialog(){ state.pendingDeleteId = null; renderDialog(); }
+function confirmVerwijderRegel(){
+  const id = state.pendingDeleteId;
+  state.pendingDeleteId = null;
+  state.regels = state.regels.filter(r=>r.id!==id);
+  if(state.selectedId===id){ state.selectedId=null; state.mode=null; }
+  renderDialog();
+  renderTable(); renderPanel();
+}
+function renderDialog(){
+  document.getElementById('dialog-root').innerHTML = state.pendingDeleteId ? `
+    <div class="dialog-overlay" onclick="if(event.target===this) closeDialog()">
+      <div class="dialog-card">
+        <div class="dialog-title">Delete registration?</div>
+        <div class="dialog-body">This action cannot be undone.</div>
+        <div class="dialog-actions">
+          <button class="btn" onclick="closeDialog()">Cancel</button>
+          <button class="btn btn-danger" onclick="confirmVerwijderRegel()">Delete</button>
+        </div>
+      </div>
+    </div>` : '';
+  if(state.pendingDeleteId){
+    gsap.from('.dialog-card', { scale: 0.9, opacity: 0, duration: 0.2, ease: 'back.out(1.7)' });
+  }
+}
+
+function selectOptions(list, current){
+  return '<option value="">— select —</option>' + list.map(i=>`<option value="${i}" ${i===current?'selected':''}>${i}</option>`).join('');
+}
+function historyTableHtml(historie){
+  return `<table class="mini-table"><tr><th>Time</th><th>Event</th><th>Extra Information</th></tr>
+    ${historie.map(h=>`<tr><td>${h.tijd||'—'}</td><td>${STATUS_LABEL[h.status]}</td><td>${h.extra||''}</td></tr>`).join('')}
+  </table>`;
+}
+
+function getFilteredRegels(){
+  const q = state.search.trim().toLowerCase();
+  return state.regels.filter(r=>{
+    if(state.filterStatus && r.status !== state.filterStatus) return false;
+    if(state.filterPressLine && r.persenrij !== state.filterPressLine) return false;
+    if(q && ![r.product,r.persenrij,r.oven,r.aanvraag,r.regId].join(' ').toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+function handleSearch(v){ state.search = v; renderTable(); }
+function applyFilters(){
+  state.filterStatus = document.getElementById('filter-status').value;
+  state.filterPressLine = document.getElementById('filter-pressline').value;
+  renderTable();
+}
+function renderTable(){
+  const pressLineSelect = document.getElementById('filter-pressline');
+  if(pressLineSelect && pressLineSelect.options.length <= 1){
+    PICKLISTS.pressLines.forEach(p=>{ const o=document.createElement('option'); o.value=p; o.textContent=p; pressLineSelect.appendChild(o); });
+  }
+  const regels = getFilteredRegels();
+  document.getElementById('row-count').textContent = regels.length + (regels.length===1?' registration':' registrations');
+  const wrap = document.getElementById('table-wrap');
+  if(!regels.length){
+    wrap.innerHTML = `<div class="empty"><p>${state.regels.length?'No registrations match this filter.':'No registrations yet.'}</p>${state.regels.length?'':'<button class="btn btn-primary" onclick="startNieuw()">+ New registration</button>'}</div>`;
+    return;
+  }
+  wrap.innerHTML = `
+    <table class="grid">
+      <thead><tr><th>ID</th><th>Request</th><th>Product</th><th>Press line / Oven</th><th>Status</th><th>Date</th><th>Faults</th><th>Values</th></tr></thead>
+      <tbody>
+        ${regels.map(r=>`
+          <tr class="${r.id===state.selectedId?'selected':''}${r.id===state.highlightId?' just-saved':''}" onclick="selectRow('${r.id}')">
+            <td class="mono">${r.regId}</td>
+            <td class="mono">${r.aanvraag || '—'}</td>
+            <td>${r.product}</td>
+            <td class="sub">${r.persenrij} · ${r.oven}</td>
+            <td><span class="badge s-${r.status}">${STATUS_LABEL[r.status]}</span></td>
+            <td class="mono">${formatDate(r.datum)}</td>
+            <td class="mono">${r.storingen.length}</td>
+            <td class="mono">${r.productwaarden.length}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderPanel(){
+  const panel = document.getElementById('panel');
+  if(state.mode === 'form' && state.formDraft){
+    panel.innerHTML = `<div class="panel-body">${formPanelHtml()}</div>`;
+    gsap.from('.panel-body', { opacity: 0, x: 25, duration: 0.25, ease: 'power2.out' });
+    return;
+  }
+  if(state.mode === 'detail' && state.selectedId){
+    const r = state.regels.find(x=>x.id===state.selectedId);
+    if(r){
+      panel.innerHTML = `<div class="panel-body">${detailPanelHtml(r)}</div>`;
+      gsap.from('.panel-body', { opacity: 0, x: 25, duration: 0.25, ease: 'power2.out' });
+      return;
+    }
+  }
+  panel.innerHTML = `<div class="panel-empty">Select a registration to view details, or create a new one.</div>`;
+}
+
+function downtimeBoxHtml(d){
+  if(d.status !== 'downtime') return '';
+  const last = d.statusHistorie[d.statusHistorie.length-1];
+  return `
+    <div class="downtime-box">
+      <div class="field"><label>Downtime time <span class="req">*</span></label><input type="time" id="f-downtime-time" value="${last.tijd||''}"></div>
+      <div class="field" style="margin-bottom:0;"><label>Reason <span class="req">*</span></label><select id="f-downtime-reason">${selectOptions(PICKLISTS.downtimeReasons, last.extra)}</select></div>
+    </div>`;
+}
+
+function statusPickerHtml(d){
+  const buttons = STATUS_ORDER.map(s=>{
+    const isCurrent = d.status===s;
+    return `<button type="button" class="status-btn s-${s} ${isCurrent?'on':''}" onclick="setStatus('${s}')">${STATUS_LABEL[s]}</button>`;
+  }).join('');
+  return `
+    <div class="current-status-line">Current status: <span class="status-dot s-${d.status}"></span>${STATUS_LABEL[d.status]}</div>
+    <div class="status-picker">${buttons}</div>
+  `;
+}
+
+function detailPanelHtml(r){
+  return `
+    <div class="panel-head">
+      <div>
+        <div style="font-family:var(--font-mono); font-size:12px; color:var(--text-muted); margin-bottom:4px;">${r.regId}</div>
+        <div class="panel-title">${r.product}</div>
+        <div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">${r.persenrij} · ${r.oven}${r.aanvraag ? ' · ' + r.aanvraag : ''}</div>
+      </div>
+      <button class="panel-close" onclick="closePanel()">×</button>
+    </div>
+    <span class="badge s-${r.status}">${STATUS_LABEL[r.status]}</span>
+    <div class="panel-section">
+      <h3>Registration</h3>
+      <table class="mini-table">
+        <tr><td>Request</td><td>${r.aanvraag || '—'}</td></tr>
+        <tr><td>Date</td><td>${formatDate(r.datum)}</td></tr>
+      </table>
+    </div>
+    <div class="panel-section">
+      <h3>Status History</h3>
+      ${historyTableHtml(r.statusHistorie)}
+    </div>
+    <div class="panel-section">
+      <h3>Faults (${r.storingen.length})</h3>
+      ${r.storingen.length?`<table class="mini-table"><tr><th>Type</th><th>Time</th><th>Duration</th></tr>${r.storingen.map(s=>`<tr><td>${s.type||'—'}</td><td>${s.tijdstip||'—'}</td><td>${s.duur?s.duur+' min':'—'}</td></tr>`).join('')}</table>`:`<div class="mini-empty">No faults.</div>`}
+    </div>
+    <div class="panel-section">
+      <h3>Product Values (${r.productwaarden.length})</h3>
+      ${r.productwaarden.length?`<table class="mini-table"><tr><th>Name</th><th>Value</th></tr>${r.productwaarden.map(p=>`<tr><td>${p.naam||'—'}</td><td>${p.waarde||'—'}</td></tr>`).join('')}</table>`:`<div class="mini-empty">No product values.</div>`}
+    </div>
+    <div class="panel-actions">
+      <button class="btn btn-sm" onclick="startBewerken('${r.id}')">Edit</button>
+      <button class="btn btn-sm" style="color:var(--danger); border-color:var(--border-strong);" onclick="askVerwijderRegel('${r.id}')">Delete</button>
+    </div>
+  `;
+}
+
+function formPanelHtml(){
+  const d = state.formDraft;
+  const storingRows = d.storingen.map(s=>`
+    <div class="repeat-row">
+      <div style="flex:1;">
+        <div class="field"><label>Fault type <span class="req">*</span></label><select id="s-type-${s.id}">${selectOptions(PICKLISTS.faultTypes, s.type)}</select></div>
+        <div class="field"><label>Time <span class="req">*</span></label><input type="time" id="s-tijd-${s.id}" value="${s.tijdstip||''}"></div>
+        <div class="field"><label>Duration (min) <span class="req">*</span></label><input type="number" min="0" id="s-duur-${s.id}" value="${s.duur||''}"></div>
+      </div>
+      <button type="button" class="row-remove" onclick="removeStoring('${s.id}')">×</button>
+    </div>
+  `).join('');
+  const waardeRows = d.productwaarden.map(p=>`
+    <div class="repeat-row">
+      <div style="flex:1;">
+        <div class="field"><label>Value name <span class="req">*</span></label><select id="p-naam-${p.id}">${selectOptions(PICKLISTS.valueNames, p.naam)}</select></div>
+        <div class="field"><label>Value <span class="req">*</span></label><input type="number" id="p-waarde-${p.id}" value="${p.waarde||''}"></div>
+      </div>
+      <button type="button" class="row-remove" onclick="removeWaarde('${p.id}')">×</button>
+    </div>
+  `).join('');
+  return `
+    <div class="panel-head">
+      <div class="panel-title">${state.editingId?'Edit registration':'New registration'}</div>
+      <button class="panel-close" onclick="cancelForm()">×</button>
+    </div>
+    <fieldset>
+      <legend>Registration</legend>
+      <div class="field-row">
+        <div class="field"><label>Request number</label><input type="text" id="f-aanvraag" value="${d.aanvraag||''}" placeholder="e.g. 240817-03"></div>
+        <div class="field"><label>Date</label><input type="date" id="f-datum" value="${d.datum}"></div>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Product & Line</legend>
+      <div class="field"><label>Product <span class="req">*</span></label><select id="f-product">${selectOptions(PICKLISTS.products, d.product)}</select></div>
+      <div class="field-row">
+        <div class="field"><label>Press line <span class="req">*</span></label><select id="f-pressline">${selectOptions(PICKLISTS.pressLines, d.persenrij)}</select></div>
+        <div class="field"><label>Oven <span class="req">*</span></label><select id="f-oven">${selectOptions(PICKLISTS.ovens, d.oven)}</select></div>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Status</legend>
+      ${statusPickerHtml(d)}
+      ${downtimeBoxHtml(d)}
+    </fieldset>
+    <fieldset>
+      <legend>Faults</legend>
+      ${storingRows}
+      <button type="button" class="add-row-btn" onclick="addStoring()">+ Add fault</button>
+    </fieldset>
+    <fieldset style="margin-bottom:0;">
+      <legend>Product Values</legend>
+      ${waardeRows}
+      <button type="button" class="add-row-btn" onclick="addWaarde()">+ Add value</button>
+    </fieldset>
+    ${state.formErrors.length?`<div class="form-error-summary"><ul>${state.formErrors.map(e=>`<li>${e}</li>`).join('')}</ul></div>`:''}
+    <div class="panel-actions">
+      <button class="btn btn-primary" onclick="saveDraft()">Save</button>
+      <button class="btn" onclick="cancelForm()">Cancel</button>
+    </div>
+  `;
+}
+
+renderTable();
+renderPanel();
+</script>
+</body>
+</html>

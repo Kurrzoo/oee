@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modine Performance</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+<style>
+  /* ==========================================================================
+     1. CSS VARIABELEN & RESET
+     ========================================================================== */
+  :root {
+    --bg: #eef1f3;
+    --surface: #ffffff;
+    --surface-subtle: #f7f9fa;
+    --border: #d7dbe2;
+    --border-strong: #b9c0c9;
+    --text: #1a2230;
+    --text-secondary: #5b6472;
+    --text-muted: #8a92a0;
+    
+    --accent: #2c5f8a;
+    --accent-dark: #1f4a6c;
+    --accent-bg: #e5eef5;
+    
+    --actief: #2f8f5b;
+    --actief-bg: #e6f3ec;
+    --pauze: #b97417;
+    --pauze-bg: #faf1de;
+    --stilstand: #b03a26;
+    --stilstand-bg: #f9e7e3;
+    --afgerond: #5b6472;
+    --afgerond-bg: #eaecef;
+    --danger: #b03a26;
+    --danger-hover: #8e2e1e;
+    
+    --radius: 10px;
+    --radius-sm: 6px;
+    --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --shadow-sm: 0 2px 6px rgba(26,34,48,0.04);
+    --shadow-md: 0 8px 24px rgba(26,34,48,0.08);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 14px; line-height: 1.5; }
+  button, input, select { font-family: inherit; font-size: 14px; color: inherit; }
+
+  /* ==========================================================================
+     2. LAYOUT & STRUCTUUR
+     ========================================================================== */
+  .app { display: flex; min-height: 100vh; }
+
+  .rail {
+    width: 240px;
+    flex: none;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+    gap: 24px;
+    z-index: 10;
+  }
+  
+  main { flex: 1; padding: 32px 40px; max-width: 1000px; margin: 0 auto; }
+
+  .rail-title { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+  
+  .nav { display: flex; flex-direction: column; gap: 6px; }
+  .nav-item {
+    text-align: left;
+    padding: 10px 14px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .nav-item:hover { background: var(--bg); color: var(--text); transform: translateX(2px); }
+  .nav-item.active { background: var(--accent-bg); color: var(--accent-dark); font-weight: 600; }
+  .nav-count { font-family: var(--font-mono); font-size: 12px; opacity: 0.8; }
+
+  .view-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 12px; flex-wrap: wrap; }
+  .view-header h1 { font-size: 24px; font-weight: 700; margin: 0; letter-spacing: -0.02em; }
+
+  /* ==========================================================================
+     3. COMPONENTEN (Knoppen, Inputs, Badges)
+     ========================================================================== */
+  .btn {
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+    padding: 9px 16px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn:hover { background: var(--surface-subtle); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* ==========================================================================
+     FORMULIER-FOOTER (altijd zichtbaar onderaan het scherm, los van de scrollpositie)
+     ========================================================================== */
+  main { padding-bottom: 88px; }
+
+  .form-footer {
+    position: fixed;
+    left: 240px;
+    right: 0;
+    bottom: 0;
+    background: var(--surface);
+    border-top: 2px solid var(--border-strong);
+    box-shadow: 0 -8px 24px rgba(20, 30, 45, 0.14);
+    z-index: 30;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .form-footer-inner { max-width: 1000px; margin: 0 auto; width: 100%; box-sizing: border-box; padding: 0 40px; display: flex; flex-direction: column; min-height: 0; }
+  .form-footer-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0; cursor: pointer; user-select: none; flex: none;
+  }
+  .form-footer-bar h2 { font-size: 16px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+  .form-footer-toggle { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+  .form-footer-toggle .chevron { display: inline-block; transition: transform 0.25s ease; }
+  .form-footer.open .form-footer-toggle .chevron { transform: rotate(180deg); }
+  .form-footer-body { overflow-y: auto; padding-bottom: 28px; }
+  .form-footer:not(.open) .form-footer-body { display: none; }
+
+  @media (max-width: 760px) {
+    .form-footer { left: 0; }
+    .form-footer-inner { padding: 0 16px; }
+    main { padding-bottom: 96px; }
+  }
+  
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); color: #fff; }
+  
+  .btn-danger { background: #fff; border-color: var(--danger); color: var(--danger); }
+  .btn-danger:hover { background: var(--danger); color: #fff; }
+  
+  .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+  button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+
+  .search-row { display: flex; align-items: center; max-width: 400px; margin-bottom: 12px; }
+  .search {
+    width: 100%; padding: 10px 14px; border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm); background: var(--surface);
+    transition: all 0.2s ease;
+  }
+  .search:focus { box-shadow: 0 0 0 3px var(--accent-bg); border-color: var(--accent); outline: none; }
+  .sort-note { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; font-weight: 500; }
+
+  .badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+  .badge.s-start, .badge.s-hervat { background: var(--actief-bg); color: var(--actief); }
+  .badge.s-pauze { background: var(--pauze-bg); color: var(--pauze); }
+  .badge.s-stilstand { background: var(--stilstand-bg); color: var(--stilstand); }
+  .badge.s-afgerond { background: var(--afgerond-bg); color: var(--afgerond); }
+
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .status-dot.s-start, .status-dot.s-hervat { background: var(--actief); }
+  .status-dot.s-pauze { background: var(--pauze); }
+  .status-dot.s-stilstand { background: var(--stilstand); }
+  .status-dot.s-afgerond { background: var(--afgerond); }
+
+  /* ==========================================================================
+     4. KAARTEN & ACCORDION (Met Hover & Uitklap-effect)
+     ========================================================================== */
+  .regel-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 5px solid var(--afgerond);
+    border-radius: var(--radius);
+    margin-bottom: 14px;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  /* Hover effect op de hele kaart */
+  .regel-card:hover { 
+    transform: translateY(-2px) scale(1.005); 
+    box-shadow: var(--shadow-md); 
+  }
+  
+  .regel-card.s-start, .regel-card.s-hervat { border-left-color: var(--actief); }
+  .regel-card.s-pauze { border-left-color: var(--pauze); }
+  .regel-card.s-stilstand { border-left-color: var(--stilstand); }
+  .regel-card.s-afgerond { border-left-color: var(--afgerond); }
+
+  .regel-row { display: flex; align-items: center; gap: 16px; padding: 18px 22px; cursor: pointer; user-select: none; }
+  .regel-main { flex: 1; min-width: 0; }
+  .reg-id { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); margin-bottom: 2px; }
+  .regel-title { font-weight: 600; font-size: 16px; }
+  .regel-sub { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+  .regel-meta { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+
+  .expand-icon {
+    font-size: 12px;
+    color: var(--text-muted);
+    transition: transform 0.3s ease;
+    margin-left: 8px;
+  }
+  .regel-card.is-open .expand-icon { transform: rotate(180deg); }
+
+  /* Accordion Wrapper voor GSAP */
+  .regel-detail-wrapper {
+    height: 0;
+    overflow: hidden;
+    display: none;
+    background: var(--surface-subtle);
+    border-top: 1px solid var(--border);
+  }
+
+  .regel-detail { padding: 22px; }
+  .detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; margin-bottom: 20px; }
+  .detail-field label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .detail-field div { font-weight: 600; font-size: 14px; }
+  
+  .detail-section { margin-top: 20px; }
+  .detail-section h3 { font-size: 12px; color: var(--text-secondary); font-weight: 700; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+  
+  .mini-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); }
+  .mini-table th { text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px; padding: 10px 12px; border-bottom: 1px solid var(--border); background: #f0f3f6; }
+  .mini-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .mini-table tr:last-child td { border-bottom: none; }
+  .mini-empty { font-size: 13px; color: var(--text-muted); padding: 6px 0; font-style: italic; }
+  
+  .detail-actions { margin-top: 24px; display: flex; gap: 10px; border-top: 1px solid var(--border); padding-top: 16px; }
+
+  /* Empty state */
+  .empty {
+    border: 2px dashed var(--border-strong); border-radius: var(--radius); padding: 48px 20px;
+    text-align: center; color: var(--text-secondary); background: var(--surface);
+  }
+  .empty p { margin: 0 0 16px; font-size: 15px; }
+
+  /* ==========================================================================
+     5. FORMULIEREN
+     ========================================================================== */
+  .formcard { 
+    background: var(--surface); border: 1px solid var(--border); 
+    border-radius: var(--radius); padding: 32px; box-shadow: var(--shadow-sm);
+  }
+  fieldset { border: none; padding: 0; margin: 0 0 28px; }
+  legend { font-size: 15px; font-weight: 700; color: var(--text); padding: 0 0 12px; width: 100%; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  
+  .field-row { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+  .field label .req { color: var(--danger); }
+  .field input, .field select { 
+    padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); 
+    background: #fff; transition: all 0.2s ease;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); outline: none; }
+
+  .hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .hint button { background: none; border: none; color: var(--accent); text-decoration: underline; cursor: pointer; padding: 0; font-weight: 600; }
+
+  .status-picker { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .status-btn { 
+    padding: 9px 18px; border-radius: 99px; border: 1px solid var(--border-strong); 
+    background: #fff; cursor: pointer; font-weight: 600; transition: all 0.2s ease; 
+  }
+  .status-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .status-btn:not(:disabled):hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+  .status-btn.on.s-start, .status-btn.on.s-hervat { background: var(--actief); border-color: var(--actief); color: #fff; }
+  .status-btn.on.s-pauze { background: var(--pauze); border-color: var(--pauze); color: #fff; }
+  .status-btn.on.s-stilstand { background: var(--stilstand); border-color: var(--stilstand); color: #fff; }
+  .status-btn.on.s-afgerond { background: var(--afgerond); border-color: var(--afgerond); color: #fff; }
+
+  .current-status-line { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; }
+
+  #stilstand-box-container { overflow: hidden; }
+  .stilstand-box { 
+    margin-top: 16px; padding: 18px; border: 1px solid var(--stilstand); 
+    background: var(--stilstand-bg); border-radius: var(--radius-sm);
+  }
+  .stilstand-box .field-row { grid-template-columns: repeat(2, minmax(0,1fr)); }
+
+  .repeat-row { 
+    display: grid; grid-template-columns: 1.4fr 1fr 0.8fr auto; gap: 12px; 
+    align-items: end; margin-bottom: 12px; background: var(--surface-subtle); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+  }
+  .repeat-row.pw { grid-template-columns: 1.4fr 1fr auto; }
+  .row-remove { 
+    border: 1px solid var(--border-strong); background: #fff; border-radius: var(--radius-sm); 
+    height: 40px; width: 40px; cursor: pointer; color: var(--text-secondary); font-size: 18px; font-weight: 700;
+    transition: all 0.2s ease; display: flex; align-items: center; justify-content: center;
+  }
+  .row-remove:hover { color: #fff; border-color: var(--danger); background: var(--danger); }
+  
+  .add-row-btn { 
+    border: 1px dashed var(--border-strong); background: #fff; border-radius: var(--radius-sm); 
+    padding: 12px 16px; cursor: pointer; color: var(--text-secondary); font-weight: 600; 
+    width: 100%; text-align: center; margin-top: 8px; transition: all 0.2s ease;
+  }
+  .add-row-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+
+  .form-actions { display: flex; gap: 12px; margin-top: 32px; align-items: center; border-top: 1px solid var(--border); padding-top: 24px; }
+  
+  .form-error-summary { 
+    color: var(--danger); font-size: 14px; font-weight: 600; margin-top: 20px; padding: 14px 18px;
+    background: var(--stilstand-bg); border-left: 4px solid var(--danger); border-radius: var(--radius-sm);
+  }
+
+  /* ==========================================================================
+     6. MODAL & TOAST NOTIFICATIES
+     ========================================================================== */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(26, 34, 48, 0.4); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; opacity: 0; pointer-events: none;
+  }
+  .modal-overlay.active { pointer-events: auto; }
+  .modal-card {
+    background: #fff; border-radius: var(--radius); padding: 28px;
+    max-width: 420px; width: 90%; box-shadow: var(--shadow-md);
+    transform: scale(0.95);
+  }
+  .modal-title { font-size: 18px; font-weight: 700; margin: 0 0 8px; }
+  .modal-text { color: var(--text-secondary); margin-bottom: 24px; font-size: 14px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+  /* Toast notification */
+  .toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 1100; pointer-events: none; }
+  .toast {
+    background: var(--text); color: #fff; padding: 12px 20px; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 500; box-shadow: var(--shadow-md); display: flex; align-items: center; gap: 10px;
+    pointer-events: auto; transform: translateY(20px); opacity: 0;
+  }
+  .toast.success { background: var(--actief); }
+  .toast.error { background: var(--danger); }
+
+  /* ==========================================================================
+     7. RESPONSIVE
+     ========================================================================== */
+  @media (max-width: 760px) {
+    .app { flex-direction: column; }
+    .rail { width: 100%; padding: 16px; flex-direction: row; align-items: center; justify-content: space-between; border-right: none; border-bottom: 1px solid var(--border); }
+    .nav { flex-direction: row; gap: 8px; }
+    main { padding: 20px 16px; }
+    .field-row, .detail-grid { grid-template-columns: 1fr; }
+    .repeat-row { grid-template-columns: 1fr; position: relative; }
+    .repeat-row.pw { grid-template-columns: 1fr; }
+    .row-remove { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="rail">
+    <div>
+      <div class="rail-title">Modine Performance</div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" onclick="scrollNaarOverzicht()">
+        Overzicht Registraties <span class="nav-count" id="nav-count"></span>
+      </button>
+      <button class="nav-item" onclick="startNieuw()">
+        + Nieuwe registratie
+      </button>
+    </nav>
+  </aside>
+
+  <main id="main">
+    </main>
+</div>
+
+<div class="form-footer open" id="registratie-form-sectie">
+  <div class="form-footer-inner">
+    <div class="form-footer-bar" onclick="toggleFormFooter()">
+      <h2 id="form-footer-title">Nieuwe registratie</h2>
+      <span class="form-footer-toggle"><span id="form-footer-toggle-label">Inklappen</span><span class="chevron">▲</span></span>
+    </div>
+    <div class="form-footer-body" id="form-footer-body"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-card" id="modal-card">
+    <h3 class="modal-title" id="modal-title">Remove Registratie</h3>
+    <p class="modal-text" id="modal-text">Are you sure you want to remove this registratie? This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="modal-confirm-btn">Remove</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+/* ==========================================================================
+   CONSTANTEN & CONFIGURATIE
+   ========================================================================== */
+const PICKLISTS = {
+  producten: ['Radiator type A12','Intercooler B7','Oliekoeler C4','Condensor D9','Ladeluchtkoeler E3'],
+  persenrijen: ['Persenrij 1','Persenrij 2','Persenrij 3'],
+  ovens: ['IJzer Oven 20','Aluminium Oven 8'],
+  storingTypes: ['Materiaaltekort','Persstoring','Machinestop','Kwaliteitscontrole','Onderhoud','Instelfout'],
+  stilstandRedenen: ['Materiaaltekort','Technische storing','Wachten op operator','Omstelling','Onderhoud','Overig'],
+  waardeNamen: ['Aantal goed','Aantal afkeur','Cyclustijd (sec)','Stilstandtijd (min)']
+};
+
+const STATUS_LABEL = { start: 'Gestart', pauze: 'Pauze', stilstand: 'Stilstand', hervat: 'Hervat', afgerond: 'Afgerond' };
+const STATUS_ORDER = ['start','pauze','stilstand','hervat','afgerond'];
+const ALLOWED_NEXT = { 
+  start: ['pauze','stilstand','afgerond'], 
+  pauze: ['hervat'], 
+  stilstand: ['hervat'], 
+  hervat: ['pauze','stilstand','afgerond'], 
+  afgerond: [] 
+};
+
+let uidCounter = 1;
+
+let state = {
+  regels: [],
+  expandedId: null,
+  editingId: null,
+  formDraft: null,
+  formErrors: [],
+  search: '',
+  isBusy: false
+};
+
+/* ==========================================================================
+   HELPER FUNCTIES
+   ========================================================================== */
+function uid(prefix) { return prefix + '-' + (uidCounter++); }
+function nowTime() { return new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}); }
+function todayISO() {
+  const now = new Date();
+  return now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+}
+function formatDate(iso) {
+  if (!iso) return '—';
+  const parts = iso.split('-');
+  return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : iso;
+}
+// Zet de datetime die de server teruggeeft (YYYY-MM-DD HH:MM:SS) om naar NL-notatie
+function formatDateTime(value) {
+  if (!value) return '—';
+  const parts = value.split(' ');
+  if (parts.length !== 2) return value;
+  const [datum, tijd] = parts;
+  const stukjes = datum.split('-');
+  if (stukjes.length !== 3) return value;
+  const [jaar, maand, dag] = stukjes;
+  return `${dag}-${maand}-${jaar} ${tijd.slice(0,5)}`;
+}
+function val(sel) { const el = document.querySelector(sel); return el ? el.value : undefined; }
+
+// Voorkomt XSS: gegevens die uiteindelijk uit de database komen (of via een directe
+// API-aanroep buiten dit formulier om) worden nooit ongefilterd in innerHTML gezet.
+function escapeHtml(value) {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/* ==========================================================================
+   TOAST & MODAL NOTIFICATIES (Met GSAP)
+   ========================================================================== */
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = message;
+  container.appendChild(toast);
+
+  gsap.to(toast, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' });
+
+  setTimeout(() => {
+    gsap.to(toast, { opacity: 0, y: -10, duration: 0.3, ease: 'power2.in', onComplete: () => toast.remove() });
+  }, 3500);
+}
+
+let onModalConfirmCallback = null;
+
+function showConfirmModal(title, text, onConfirm) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-text').textContent = text;
+  onModalConfirmCallback = onConfirm;
+
+  const modal = document.getElementById('confirm-modal');
+  const card = document.getElementById('modal-card');
+  modal.classList.add('active');
+  gsap.to(modal, { opacity: 1, duration: 0.25 });
+  gsap.fromTo(card, { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: 'back.out(1.4)' });
+}
+
+function closeModal() {
+  const modal = document.getElementById('confirm-modal');
+  const card = document.getElementById('modal-card');
+
+  gsap.to(card, { scale: 0.95, opacity: 0, duration: 0.2 });
+  gsap.to(modal, { opacity: 0, duration: 0.2, onComplete: () => {
+    modal.classList.remove('active');
+    onModalConfirmCallback = null;
+  }});
+}
+
+document.getElementById('modal-confirm-btn').addEventListener('click', () => {
+  if (onModalConfirmCallback) onModalConfirmCallback();
+  closeModal();
+});
+
+/* ==========================================================================
+   FORMULIER LOGICA & DRAFT BEHEER
+   ========================================================================== */
+function newDraft() {
+  return {
+    aanvraag: '', datum: todayISO(), product: '', persenrij: '', oven: '', status: 'start',
+    storingen: [], productwaarden: [], statusHistorie: [{ status: 'start', tijd: nowTime(), extra: '' }]
+  };
+}
+
+function syncDraftFromDOM() {
+  const d = state.formDraft;
+  if (!d) return;
+  if (document.getElementById('f-aanvraag')) d.aanvraag = val('#f-aanvraag') || '';
+  if (document.getElementById('f-datum')) d.datum = val('#f-datum') || d.datum;
+  if (document.getElementById('f-product')) d.product = val('#f-product');
+  if (document.getElementById('f-persenrij')) d.persenrij = val('#f-persenrij');
+  if (document.getElementById('f-oven')) d.oven = val('#f-oven');
+  
+  if (d.status === 'stilstand' && document.getElementById('f-stilstand-tijdstip')) {
+    const last = d.statusHistorie[d.statusHistorie.length-1];
+    if (last) {
+      last.tijd = val('#f-stilstand-tijdstip') || last.tijd;
+      last.extra = val('#f-stilstand-reden') || '';
+    }
+  }
+  
+  d.storingen.forEach(s => {
+    if (document.getElementById('s-type-'+s.id)) s.type = val('#s-type-'+s.id);
+    if (document.getElementById('s-tijd-'+s.id)) s.tijdstip = val('#s-tijd-'+s.id) || '';
+    if (document.getElementById('s-duur-'+s.id)) s.duur = val('#s-duur-'+s.id) || '';
+  });
+  d.productwaarden.forEach(p => {
+    if (document.getElementById('p-naam-'+p.id)) p.naam = val('#p-naam-'+p.id);
+    if (document.getElementById('p-waarde-'+p.id)) p.waarde = val('#p-waarde-'+p.id) || '';
+  });
+}
+
+function setStatus(newStatus) {
+  syncDraftFromDOM();
+  const d = state.formDraft;
+  
+  if (d.status !== newStatus) {
+    const actueleTijd = nowTime();
+    const laatsteHistorie = d.statusHistorie[d.statusHistorie.length - 1];
+
+    if (laatsteHistorie && laatsteHistorie.tijd === actueleTijd) {
+      laatsteHistorie.status = newStatus;
+      laatsteHistorie.extra = '';
+    } else {
+      d.statusHistorie.push({ status: newStatus, tijd: actueleTijd, extra: '' });
+    }
+    
+    d.status = newStatus;
+  }
+
+  // DOM updaten zodat de knoppen visueel direct veranderen
+  document.querySelectorAll('.status-btn').forEach(btn => {
+    const isCurrent = btn.classList.contains(`s-${newStatus}`);
+    btn.classList.toggle('on', isCurrent);
+  });
+
+  const lineDot = document.querySelector('.current-status-line');
+  if (lineDot) {
+    lineDot.innerHTML = `Current Status: <span class="status-dot s-${d.status}"></span>${STATUS_LABEL[d.status]}`;
+  }
+
+  // Toon of verberg het stilstand-invoerveld
+  const container = document.getElementById('stilstand-box-container');
+  if (newStatus === 'stilstand') {
+    container.innerHTML = stilstandBoxHtml(d);
+    gsap.fromTo(container, { height: 0, opacity: 0 }, { height: 'auto', opacity: 1, duration: 0.3, ease: 'power2.out' });
+  } else {
+    // Alleen dichtklappen als hij daadwerkelijk open staat
+    if (container.innerHTML.trim() !== '') {
+      gsap.to(container, { height: 0, opacity: 0, duration: 0.25, ease: 'power2.in', onComplete: () => { container.innerHTML = ''; } });
+    }
+  }
+}
+
+function addStoring() { 
+  syncDraftFromDOM(); 
+  const newObj = { id: uid('s'), type: '', tijdstip: nowTime(), duur: '' };
+  state.formDraft.storingen.push(newObj);
+  
+  const list = document.getElementById('storingen-list');
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = storingRowHtml(newObj);
+  const row = tempDiv.firstElementChild;
+  list.appendChild(row);
+
+  gsap.fromTo(row, { opacity: 0, y: -10, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: 'back.out(1.2)' });
+}
+
+function removeStoring(id) { 
+  syncDraftFromDOM(); 
+  state.formDraft.storingen = state.formDraft.storingen.filter(s => s.id !== id);
+  const elem = document.getElementById(`storing-row-${id}`);
+  if (elem) {
+    gsap.to(elem, { opacity: 0, height: 0, marginBottom: 0, padding: 0, duration: 0.25, onComplete: () => elem.remove() });
+  }
+}
+
+function addWaarde() { 
+  syncDraftFromDOM(); 
+  const newObj = { id: uid('p'), naam: '', waarde: '' };
+  state.formDraft.productwaarden.push(newObj);
+
+  const list = document.getElementById('waarden-list');
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = waardeRowHtml(newObj);
+  const row = tempDiv.firstElementChild;
+  list.appendChild(row);
+
+  gsap.fromTo(row, { opacity: 0, y: -10, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: 'back.out(1.2)' });
+}
+
+function removeWaarde(id) { 
+  syncDraftFromDOM(); 
+  state.formDraft.productwaarden = state.formDraft.productwaarden.filter(p => p.id !== id); 
+  const elem = document.getElementById(`waarde-row-${id}`);
+  if (elem) {
+    gsap.to(elem, { opacity: 0, height: 0, marginBottom: 0, padding: 0, duration: 0.25, onComplete: () => elem.remove() });
+  }
+}
+
+function validateDraft(d) {
+  const errors = [];
+  if (!d.product) errors.push('Kies een product.');
+  if (!d.persenrij) errors.push('Kies een persenrij.');
+  if (!d.oven) errors.push('Kies een oven.');
+  if (d.status === 'stilstand') {
+    const last = d.statusHistorie[d.statusHistorie.length-1];
+    if (!last.tijd) errors.push('Vul het tijdstip van de stilstand in.');
+    if (!last.extra) errors.push('Kies een reden voor de stilstand.');
+  }
+  d.storingen.forEach((s, idx) => {
+    if (!s.type) errors.push(`Kies een type voor storing ${idx+1}.`);
+    if (!s.tijdstip) errors.push(`Vul een tijdstip in voor storing ${idx+1}.`);
+    if (s.duur === '' || s.duur === undefined || isNaN(Number(s.duur)) || Number(s.duur) < 0) errors.push(`Vul een geldige duur in voor storing ${idx+1}.`);
+  });
+  const gebruikteWaardeNamen = new Set();
+  d.productwaarden.forEach((p, idx) => {
+    if (!p.naam) {
+      errors.push(`Kies een naam voor productwaarde ${idx+1}.`);
+    } else if (gebruikteWaardeNamen.has(p.naam)) {
+      errors.push(`Productwaarde "${p.naam}" is al toegevoegd.`);
+    } else {
+      gebruikteWaardeNamen.add(p.naam);
+    }
+    if (p.waarde === '' || p.waarde === undefined || isNaN(Number(p.waarde)) || Number(p.waarde) < 0) {
+      errors.push(`Vul een geldige waarde in voor productwaarde ${idx+1} (0 of hoger).`);
+    }
+  });
+  return errors;
+}
+
+// Toont formuliervalidatiefouten inline (gebruikt door saveDraft verderop)
+function renderFormErrors() {
+  const container = document.getElementById('form-errors');
+  if (!container) return;
+  container.innerHTML = state.formErrors.join('<br>');
+  container.style.display = state.formErrors.length ? 'block' : 'none';
+  if (state.formErrors.length) {
+    gsap.fromTo(container, { x: -8 }, { x: 8, duration: 0.08, repeat: 3, yoyo: true, ease: 'power1.inOut' });
+  }
+}
+
+// Zet knoppen tijdens een lopende API-aanroep op "bezig", zodat dubbelklikken
+// niet tot dubbele database-acties kan leiden (zie sectie 15 van de opdracht).
+function setBusy(isBusy, knopId, bezigTekst, normaalTekst) {
+  state.isBusy = isBusy;
+  const btn = document.getElementById(knopId);
+  if (btn) {
+    btn.disabled = isBusy;
+    btn.textContent = isBusy ? bezigTekst : normaalTekst;
+  }
+}
+
+/* ==========================================================================
+   INTERACTIE HANDLERS & ANIMATIES
+   ========================================================================== */
+// "Overzicht Registraties" in de zijbalk: scrollt terug naar boven
+function scrollNaarOverzicht() {
+  const el = document.getElementById('regel-list');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function startNieuw() {
+  state.formDraft = newDraft();
+  state.editingId = null;
+  state.formErrors = [];
+  refreshFormFooter();
+  toggleFormFooter(true);
+}
+
+function startBewerken(id) {
+  // r.id komt als getal terug uit de database, id hier komt als tekst binnen vanuit de
+  // knop (onclick="startBewerken('${r.id}')") — String() voorkomt dat 5 !== '5' de match mist.
+  const regel = state.regels.find(r => String(r.id) === String(id));
+  if (!regel) {
+    showToast('Deze registratie kon niet worden gevonden. Ververs de pagina en probeer opnieuw.', 'error');
+    return;
+  }
+  state.formDraft = JSON.parse(JSON.stringify(regel));
+  state.editingId = regel.id;
+  state.formErrors = [];
+  refreshFormFooter();
+  toggleFormFooter(true);
+}
+
+function verwijderRegel(id) {
+  showConfirmModal('Registratie verwijderen', 'Weet je zeker dat je deze registratie wilt verwijderen? Dit kan niet ongedaan worden gemaakt.', () => doVerwijderRegel(id));
+}
+
+// Verwijdert een registratie écht uit de database (DELETE) en herlaadt daarna de lijst.
+async function doVerwijderRegel(id) {
+  if (state.isBusy) return;
+  state.isBusy = true;
+  try {
+    const response = await fetch(`api.php?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const result = await response.json();
+
+    if (result.success) {
+      if (String(state.expandedId) === String(id)) state.expandedId = null;
+      showToast('Registratie verwijderd.', 'error');
+      await loadData();
+      render();
+    } else {
+      showToast(result.message || 'Verwijderen is mislukt.', 'error');
+    }
+  } catch (error) {
+    console.error('Fout bij verwijderen:', error);
+    showToast('Kon geen verbinding maken met de server.', 'error');
+  } finally {
+    state.isBusy = false;
+  }
+}
+
+/* Smooth Accordion Uitklap Animaties met GSAP */
+function toggleExpandCard(id) {
+  const wrapper = document.getElementById(`detail-wrapper-${id}`);
+  const card = document.getElementById(`card-${id}`);
+  if (!wrapper) return;
+
+  const isOpen = card.classList.contains('is-open');
+
+  if (isOpen) {
+    // Inklappen
+    card.classList.remove('is-open');
+    gsap.to(wrapper, {
+      height: 0, opacity: 0, duration: 0.3, ease: 'power2.inOut',
+      onComplete: () => { wrapper.style.display = 'none'; }
+    });
+    state.expandedId = null;
+  } else {
+    // Eventueel vorige sluiten
+    if (state.expandedId && String(state.expandedId) !== String(id)) {
+      toggleExpandCard(state.expandedId);
+    }
+
+    card.classList.add('is-open');
+    wrapper.style.display = 'block';
+    gsap.fromTo(wrapper, 
+      { height: 0, opacity: 0 }, 
+      { height: 'auto', opacity: 1, duration: 0.35, ease: 'power2.out' }
+    );
+    state.expandedId = id;
+  }
+}
+
+function cancelForm() {
+  state.formDraft = newDraft();
+  state.editingId = null;
+  state.formErrors = [];
+  refreshFormFooter();
+}
+
+function handleSearch(v) {
+  state.search = v; 
+  renderOverzichtListOnly();
+}
+
+function emptyStateHtml() {
+  if (state.regels.length === 0) {
+    return `<div class="empty">
+              <p>No Registraties yet.</p>
+              <button class="btn btn-primary" onclick="startNieuw()">+ New Registratie</button>
+            </div>`;
+  }
+  return `<div class="empty"><p>No Registraties found.</p></div>`;
+}
+
+function renderOverzichtListOnly() {
+  const q = state.search.trim().toLowerCase();
+  const regels = state.regels.filter(r => !q || [r.product, r.persenrij, r.oven, r.aanvraag, r.regId].join(' ').toLowerCase().includes(q));
+  const listEl = document.getElementById('regel-list');
+  if (!listEl) return;
+  
+  listEl.innerHTML = regels.length ? regels.map(regelCardHtml).join('') : emptyStateHtml();
+  
+  if (regels.length) {
+    gsap.from("#regel-list .regel-card", { opacity: 0, y: 12, duration: 0.25, stagger: 0.04, ease: "power2.out" });
+  }
+}
+
+/* ==========================================================================
+   HTML RENDER FUNCTIES
+   ========================================================================== */
+function selectOptions(list, current) {
+  return '<option value="">— kies —</option>' + list.map(item => `<option value="${item}" ${item === current ? 'selected' : ''}>${item}</option>`).join('');
+}
+
+function stilstandBoxHtml(d) {
+  if (d.status !== 'stilstand') return '';
+  const last = d.statusHistorie[d.statusHistorie.length-1] || {};
+  return `
+    <div class="stilstand-box">
+      <div class="field-row">
+        <div class="field"><label>Tijdstip stilstand <span class="req">*</span></label><input type="time" id="f-stilstand-tijdstip" value="${last.tijd||''}"></div>
+        <div class="field"><label>Reden <span class="req">*</span></label><select id="f-stilstand-reden">${selectOptions(PICKLISTS.stilstandRedenen, last.extra)}</select></div>
+      </div>
+    </div>`;
+}
+
+function statusPickerHtml(d) {
+  const buttons = STATUS_ORDER.map(s => {
+    const isCurrent = d.status === s;
+    return `<button type="button" class="status-btn s-${s} ${isCurrent ? 'on' : ''}" onclick="setStatus('${s}')">${STATUS_LABEL[s]}</button>`;
+  }).join('');
+  
+  return `<div class="current-status-line">Current Status: <span class="status-dot s-${d.status}"></span>${STATUS_LABEL[d.status]}</div><div class="status-picker">${buttons}</div>`;
+}
+
+function storingRowHtml(s) {
+  return `<div class="repeat-row" id="storing-row-${s.id}">
+            <div class="field">
+              <label>Type <span class="req">*</span></label>
+              <select id="s-type-${s.id}">${selectOptions(PICKLISTS.storingTypes, s.type)}</select>
+            </div>
+            <div class="field">
+              <label>Tijd <span class="req">*</span></label>
+              <input type="time" id="s-tijd-${s.id}" value="${escapeHtml(s.tijdstip||'')}">
+            </div>
+            <div class="field">
+              <label>Duur (min) <span class="req">*</span></label>
+              <input type="number" min="0" id="s-duur-${s.id}" value="${escapeHtml(s.duur||'')}">
+            </div>
+            <button type="button" class="row-remove" onclick="removeStoring('${s.id}')">×</button>
+          </div>`;
+}
+
+function waardeRowHtml(p) {
+  return `<div class="repeat-row pw" id="waarde-row-${p.id}"><div class="field"><label>Waarde <span class="req">*</span></label><select id="p-naam-${p.id}">${selectOptions(PICKLISTS.waardeNamen, p.naam)}</select></div><div class="field"><label>Ingevuld <span class="req">*</span></label><input type="number" min="0" id="p-waarde-${p.id}" value="${escapeHtml(p.waarde||'')}"></div><button type="button" class="row-remove" onclick="removeWaarde('${p.id}')">×</button></div>`;
+}
+
+function historyTableHtml(historie) {
+  if (!historie || !historie.length) return `<div class="mini-empty">Nog geen statusverloop.</div>`;
+  return `<table class="mini-table"><tr><th>Tijd</th><th>Gebeurtenis</th><th>Extra informatie</th></tr>${historie.map(h => `<tr><td>${escapeHtml(h.tijd||'—')}</td><td>${escapeHtml(STATUS_LABEL[h.status]||h.status)}</td><td>${escapeHtml(h.extra||'')}</td></tr>`).join('')}</table>`;
+}
+
+// Nieuw: toont wijzigingen aan de hoofdvelden (product, persenrij, oven, aanvraag, datum)
+// zoals die écht in de database zijn vastgelegd door api.php.
+function wijzigingenTableHtml(wijzigingen) {
+  if (!wijzigingen || !wijzigingen.length) return `<div class="mini-empty">Nog geen wijzigingen.</div>`;
+  return `<table class="mini-table"><tr><th>Veld</th><th>Oud</th><th>Nieuw</th><th>Gewijzigd</th></tr>${wijzigingen.map(w => `<tr><td>${escapeHtml(w.veld)}</td><td>${escapeHtml(w.oude_waarde) || '—'}</td><td>${escapeHtml(w.nieuwe_waarde) || '—'}</td><td>${formatDateTime(w.gewijzigd_op)}</td></tr>`).join('')}</table>`;
+}
+
+function regelCardHtml(r) {
+  const isExpanded = String(state.expandedId) === String(r.id);
+  return `
+    <div class="regel-card s-${r.status} ${isExpanded ? 'is-open' : ''}" id="card-${r.id}">
+      <div class="regel-row" onclick="toggleExpandCard('${r.id}')">
+        <div class="regel-main">
+          <div class="reg-id">${escapeHtml(r.regId)}</div>
+          <div class="regel-title">${escapeHtml(r.product)}</div>
+          <div class="regel-sub">${escapeHtml(r.persenrij)} · ${escapeHtml(r.oven)}${r.aanvraag ? ' · ' + escapeHtml(r.aanvraag) : ''}</div>
+        </div>
+        <span class="badge s-${r.status}">${STATUS_LABEL[r.status]}</span>
+        <div class="regel-meta" style="margin-left:12px; text-align:right;">
+          <div>${formatDate(r.datum)}</div>
+          <div style="margin-top:2px;">${r.aangemaakt}</div>
+        </div>
+        <span class="expand-icon">▼</span>
+      </div>
+      <div class="regel-detail-wrapper" id="detail-wrapper-${r.id}" style="${isExpanded ? 'height: auto; display: block;' : ''}">
+        ${regelDetailHtml(r)}
+      </div>
+    </div>
+  `;
+}
+
+function regelDetailHtml(r) {
+  return `
+    <div class="regel-detail">
+      <div class="detail-grid">
+        <div class="detail-field"><label>Registratie</label><div>${escapeHtml(r.regId)}</div></div>
+        <div class="detail-field"><label>Aanvraag</label><div>${escapeHtml(r.aanvraag) || '—'}</div></div>
+        <div class="detail-field"><label>Datum</label><div>${formatDate(r.datum)}</div></div>
+        <div class="detail-field"><label>Product</label><div>${escapeHtml(r.product)}</div></div>
+        <div class="detail-field"><label>Persenrij</label><div>${escapeHtml(r.persenrij)}</div></div>
+        <div class="detail-field"><label>Oven</label><div>${escapeHtml(r.oven)}</div></div>
+      </div>
+      <div class="detail-section"><h3>Statusverloop</h3>${historyTableHtml(r.statusHistorie)}</div>
+      <div class="detail-section"><h3>Wijzigingshistorie</h3>${wijzigingenTableHtml(r.wijzigingen)}</div>
+      <div class="detail-section"><h3>Storingen (${r.storingen.length})</h3>${r.storingen.length ? `<table class="mini-table"><tr><th>Type</th><th>Tijdstip</th><th>Duur</th></tr>${r.storingen.map(s => `<tr><td>${escapeHtml(s.type)||'—'}</td><td>${escapeHtml(s.tijdstip)||'—'}</td><td>${s.duur ? escapeHtml(s.duur) + ' min' : '—'}</td></tr>`).join('')}</table>` : `<div class="mini-empty">Geen storingen.</div>`}</div>
+      <div class="detail-section"><h3>Productwaarden (${r.productwaarden.length})</h3>${r.productwaarden.length ? `<table class="mini-table"><tr><th>Waarde</th><th>Ingevuld</th></tr>${r.productwaarden.map(p => `<tr><td>${escapeHtml(p.naam)||'—'}</td><td>${escapeHtml(p.waarde)||'—'}</td></tr>`).join('')}</table>` : `<div class="mini-empty">Geen waarden.</div>`}</div>
+      <div class="detail-actions">
+        <button class="btn btn-sm" onclick="event.stopPropagation(); startBewerken('${r.id}')">Bewerken</button>
+        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); verwijderRegel('${r.id}')">Verwijderen</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderHoofdpagina() {
+  const q = state.search.trim().toLowerCase();
+  const regels = state.regels.filter(r => !q || [r.product, r.persenrij, r.oven, r.aanvraag, r.regId].join(' ').toLowerCase().includes(q));
+  const listHtml = regels.length ? regels.map(regelCardHtml).join('') : emptyStateHtml();
+
+  return `
+    <div>
+      <div class="view-header">
+        <h1>Registraties</h1>
+        <button class="btn btn-primary" onclick="startNieuw()">+ Nieuwe registratie</button>
+      </div>
+      <div class="search-row">
+        <input class="search" id="search-input" placeholder="Zoek op product, persenrij, ID..." value="${escapeHtml(state.search)}" oninput="handleSearch(this.value)">
+      </div>
+      <div class="sort-note">Nieuwste eerst</div>
+      <div id="regel-list">${listHtml}</div>
+    </div>
+  `;
+}
+
+// Het aanmaak-/bewerkformulier is een vaste footer onderaan het scherm (altijd zichtbaar,
+// ongeacht scrollpositie) — dit rendert alleen de INHOUD; de titelbalk staat al vast in de HTML.
+function renderFormulierFooterBody() {
+  const d = state.formDraft;
+  const storingRows = d.storingen.map(storingRowHtml).join('');
+  const waardeRows = d.productwaarden.map(waardeRowHtml).join('');
+
+  return `
+    <div class="formcard" style="box-shadow:none; border:none; padding:0;">
+      <fieldset>
+        <legend>Registratie</legend>
+        <div class="field-row" style="grid-template-columns: repeat(2, minmax(0,1fr));">
+          <div class="field"><label>Aanvraagnummer</label><input type="text" id="f-aanvraag" value="${escapeHtml(d.aanvraag||'')}"></div>
+          <div class="field"><label>Datum</label><input type="date" id="f-datum" value="${d.datum}"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Product</legend>
+        <div class="field-row">
+          <div class="field"><label>Product <span class="req">*</span></label><select id="f-product">${selectOptions(PICKLISTS.producten, d.product)}</select></div>
+          <div class="field"><label>Persenrij <span class="req">*</span></label><select id="f-persenrij">${selectOptions(PICKLISTS.persenrijen, d.persenrij)}</select></div>
+          <div class="field"><label>Oven <span class="req">*</span></label><select id="f-oven">${selectOptions(PICKLISTS.ovens, d.oven)}</select></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Status</legend>
+        ${statusPickerHtml(d)}
+        <div id="stilstand-box-container">${stilstandBoxHtml(d)}</div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Storingen</legend>
+        <div id="storingen-list">${storingRows}</div>
+        <button type="button" class="add-row-btn" onclick="addStoring()">+ Storing toevoegen</button>
+      </fieldset>
+
+      <fieldset style="margin-bottom:0;">
+        <legend>Productwaarden</legend>
+        <div id="waarden-list">${waardeRows}</div>
+        <button type="button" class="add-row-btn" onclick="addWaarde()">+ Waarde toevoegen</button>
+      </fieldset>
+
+      <div class="form-error-summary" id="form-errors" style="${state.formErrors.length ? 'display:block;' : 'display:none;'}">
+        ${state.formErrors.join('<br>')}
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" id="save-btn" onclick="saveDraft()">Opslaan</button>
+        ${state.editingId ? `<button class="btn" onclick="cancelForm()">Annuleren</button>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+// Werkt de titel van de footerbalk bij ("Nieuwe registratie" of "Registratie bewerken: REG-005")
+function updateFormFooterTitel() {
+  const titelEl = document.getElementById('form-footer-title');
+  if (!titelEl) return;
+  const d = state.formDraft;
+  titelEl.textContent = state.editingId ? `Registratie bewerken: ${d.regId || ''}` : 'Nieuwe registratie';
+}
+
+// Herbouwt de volledige inhoud van de footer (nodig na startNieuw/startBewerken/cancelForm/opslaan)
+function refreshFormFooter() {
+  const body = document.getElementById('form-footer-body');
+  if (body) body.innerHTML = renderFormulierFooterBody();
+  updateFormFooterTitel();
+}
+
+// Klap de footer in/uit; forceOpen dwingt "open" af (gebruikt bij startNieuw/startBewerken)
+function toggleFormFooter(forceOpen) {
+  const footer = document.getElementById('registratie-form-sectie');
+  const label = document.getElementById('form-footer-toggle-label');
+  if (!footer) return;
+  const openMaken = forceOpen === true ? true : forceOpen === false ? false : !footer.classList.contains('open');
+  footer.classList.toggle('open', openMaken);
+  if (label) label.textContent = openMaken ? 'Inklappen' : 'Uitklappen';
+}
+
+function updateNavCount() {
+  const countEl = document.getElementById('nav-count');
+  if(countEl) countEl.textContent = state.regels.length ? `(${state.regels.length})` : '';
+}
+
+// Rendert de kaartenlijst opnieuw. De formulier-footer is een los, vast element buiten #main
+// (zie refreshFormFooter) en wordt hier bewust niet aangeraakt, zodat hij niet steeds mee-fade't.
+function render() {
+  updateNavCount();
+
+  const mainEl = document.getElementById('main');
+
+  gsap.to(mainEl, {
+    opacity: 0, y: -6, duration: 0.15, onComplete: () => {
+      mainEl.innerHTML = renderHoofdpagina();
+      gsap.to(mainEl, { opacity: 1, y: 0, duration: 0.25, ease: "power2.out" });
+      gsap.from("#regel-list .regel-card", { opacity: 0, y: 15, duration: 0.3, stagger: 0.04, ease: "power2.out" });
+    }
+  });
+}
+
+// Data ophalen uit MySQL (SELECT). Rendert zelf niets — dat doet de aanroeper via render(),
+// zodat loadData() ook veilig aangeroepen kan worden terwijl het formulier nog open staat.
+async function loadData() {
+  try {
+    const response = await fetch('api.php');
+    const data = await response.json();
+
+    if (!Array.isArray(data)) {
+      showToast((data && data.message) || 'Registraties konden niet worden geladen.', 'error');
+      return false;
+    }
+
+    state.regels = data;
+    updateNavCount();
+    return true;
+  } catch (error) {
+    console.error('Fout bij ophalen van data:', error);
+    showToast('Kon geen verbinding maken met de server.', 'error');
+    return false;
+  }
+}
+
+// Opslaan / Wijzigen naar MySQL (INSERT of UPDATE)
+async function saveDraft() {
+  if (state.isBusy) return;
+
+  syncDraftFromDOM();
+  const d = state.formDraft;
+  const errors = validateDraft(d);
+  state.formErrors = errors;
+  if (errors.length) { renderFormErrors(); return; }
+
+  const isEdit = !!state.editingId;
+  const payload = Object.assign({}, d);
+  if (isEdit) payload.id = state.editingId;
+
+  setBusy(true, 'save-btn', 'Opslaan...', 'Opslaan');
+  try {
+    const response = await fetch('api.php', {
+      method: isEdit ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+
+    if (result.success) {
+      showToast(isEdit ? 'Registratie bijgewerkt.' : 'Nieuwe registratie opgeslagen.', 'success');
+      state.formDraft = newDraft();
+      state.editingId = null;
+      state.formErrors = [];
+      refreshFormFooter();
+      await loadData();
+      render();
+    } else {
+      // Database is de bron van waarheid: bij een fout blijft het formulier open
+      // en gaat er niets verloren, zodat de gebruiker het probleem kan corrigeren.
+      showToast(result.message || 'Opslaan is mislukt.', 'error');
+    }
+  } catch (error) {
+    console.error('Fout bij opslaan:', error);
+    showToast('Kon geen verbinding maken met de server. Je gegevens zijn niet verloren.', 'error');
+  } finally {
+    setBusy(false, 'save-btn', 'Opslaan...', 'Opslaan');
+  }
+}
+
+/* ==========================================================================
+   INITIALISATIE
+   ========================================================================== */
+document.addEventListener('DOMContentLoaded', async () => {
+  state.formDraft = newDraft();
+  refreshFormFooter();
+  await loadData();
+  render();
+});
+</script>
+</body>
+</html>

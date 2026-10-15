@@ -1,0 +1,1870 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modine Performance</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #eef1f3;
+    --surface: #ffffff;
+    --surface-subtle: #f7f9fa;
+    --border: #d7dbe2;
+    --border-strong: #b9c0c9;
+    --text: #1a2230;
+    --text-secondary: #5b6472;
+    --text-muted: #8a92a0;
+    
+    --accent: #2c5f8a;
+    --accent-dark: #1f4a6c;
+    --accent-bg: #e5eef5;
+    
+    --actief: #2f8f5b;
+    --actief-bg: #e6f3ec;
+    --pauze: #b97417;
+    --pauze-bg: #faf1de;
+    --stilstand: #b03a26;
+    --stilstand-bg: #f9e7e3;
+    --afgerond: #5b6472;
+    --afgerond-bg: #eaecef;
+    --danger: #b03a26;
+    --danger-hover: #8e2e1e;
+    
+    --radius: 10px;
+    --radius-sm: 6px;
+    --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --shadow-sm: 0 2px 6px rgba(26,34,48,0.04);
+    --shadow-md: 0 8px 24px rgba(26,34,48,0.08);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 14px; line-height: 1.5; }
+  button, input, select { font-family: inherit; font-size: 14px; color: inherit; }
+
+  /* Bestaande kleuren, typografie, kaarten en vaste formulier-footer behouden. */
+  :root { --footer-height: 60px; --text-muted: #626d7b; --actief: #247346; --pauze: #885309; }
+  [hidden] { display: none !important; }
+  body { overflow-wrap: anywhere; }
+  button, input, select, textarea { font: inherit; }
+  button, summary { cursor: pointer; touch-action: manipulation; }
+  button, input, select { min-height: 44px; }
+  button:disabled { opacity: .55; cursor: wait; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+  .site-header { background: #191919; color: #fff; padding: 16px max(20px, calc((100% - 1100px) / 2)); }
+  .brand { font-size: 14px; font-weight: 700; letter-spacing: .08em; }
+  h1 { margin: 2px 0 0; font-size: 22px; font-weight: 500; }
+  main { max-width: 1140px; margin: auto; padding: 24px 20px calc(var(--footer-height) + 32px); }
+  html { scroll-padding-bottom: calc(var(--footer-height) + 20px); }
+  h2 { font-size: 20px; margin: 0; }
+  h3 { font-size: 15px; margin: 0 0 12px; }
+  p { margin: 8px 0; }
+  .view-header, .pagination, .form-actions, .detail-actions, .status-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .view-header { justify-content: space-between; margin-bottom: 16px; }
+  .filters { display: grid; grid-template-columns: minmax(0, 2fr) 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .custom-period { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+  .sort-note, .hint, .mini-empty, .regel-sub, .regel-meta { color: var(--text-secondary); font-size: 13px; }
+  .sort-note { margin-bottom: 12px; }
+  .btn { border: 1px solid var(--border-strong); background: #fff; color: var(--text); padding: 9px 16px; border-radius: var(--radius-sm); font-weight: 500; }
+  .btn:hover:not(:disabled) { background: var(--surface-subtle); border-color: var(--accent); }
+  .btn-primary { background: var(--accent-dark); border-color: var(--accent-dark); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: #163b58; color: #fff; }
+  .btn-danger { color: var(--danger); border-color: var(--danger); }
+  .badge { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; margin-right: 6px; }
+  .badge.s-start, .badge.s-hervat { background: var(--actief-bg); color: var(--actief); }
+  .badge.s-pauze { background: var(--pauze-bg); color: var(--pauze); }
+  .badge.s-stilstand { background: var(--stilstand-bg); color: var(--stilstand); }
+  .badge.s-afgerond { background: var(--afgerond-bg); color: var(--afgerond); }
+  .regel-card { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--afgerond); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; box-shadow: var(--shadow-sm); scroll-margin-top: 12px; }
+  .regel-card.s-start, .regel-card.s-hervat { border-left-color: var(--actief); }
+  .regel-card.s-pauze { border-left-color: var(--pauze); }
+  .regel-card.s-stilstand { border-left-color: var(--stilstand); }
+  .regel-row { border: 0; background: #fff; width: 100%; text-align: left; display: grid; grid-template-columns: minmax(0,1fr) auto auto 16px; gap: 18px; align-items: center; padding: 13px 16px; }
+  .regel-row:hover { background: var(--surface-subtle); }
+  .regel-main { min-width: 0; }
+  .regel-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; font-size: 16px; font-weight: 600; }
+  .reg-id { font: 12px var(--font-mono); color: var(--text-secondary); }
+  .regel-sub { display: block; margin-top: 3px; }
+  .regel-meta { text-align: right; font-variant-numeric: tabular-nums; }
+  .regel-meta span { display: block; }
+  .expand-icon { font-size: 12px; color: var(--text-secondary); transition: transform .16s ease; }
+  [aria-expanded="true"] .expand-icon { transform: rotate(180deg); }
+  .regel-detail-wrapper { background: var(--surface-subtle); border-top: 1px solid var(--border); }
+  .regel-detail { padding: 18px; }
+  .detail-grid, .field-row { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; }
+  .detail-grid { margin: 0; }
+  .detail-field dt { color: var(--text-secondary); font-size: 12px; }
+  .detail-field dd { margin: 2px 0 0; font-weight: 500; }
+  .detail-section { margin-top: 22px; }
+  .detail-actions { border-top: 1px solid var(--border); padding-top: 14px; margin-top: 20px; }
+  summary { min-height: 44px; padding: 11px 0; font-weight: 500; }
+  .table-wrap { overflow-x: auto; }
+  .mini-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; table-layout: fixed; }
+  .mini-table th { text-align: left; background: #edf1f4; color: var(--text-secondary); }
+  .mini-table th, .mini-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .empty { border: 1px dashed var(--border-strong); border-radius: var(--radius); padding: 28px 20px; text-align: center; background: #fff; }
+  .pagination { justify-content: flex-end; margin-top: 18px; }
+  .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .field label { font-size: 13px; font-weight: 500; }
+  .field input, .field select, .field textarea { width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: #fff; color: var(--text); }
+  /* Alle keuzelijsten hebben dezelfde lichte stijl. */
+  .field select {
+    color-scheme: light;
+    appearance: none;
+    padding-right: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6472' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    cursor: pointer;
+  }
+  .field select option { background: #fff; color: var(--text); }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+  .field-error { color: var(--danger); font-size: 13px; }
+  .field-error:empty { display: none; }
+  [aria-invalid="true"] { border-color: var(--danger) !important; }
+  .form-error-summary { background: var(--stilstand-bg); color: var(--danger); border-left: 3px solid var(--danger); padding: 12px; margin: 12px 0; }
+  .form-error-summary:empty { display: none; }
+  .form-actions { padding-top: 14px; margin-top: 14px; border-top: 1px solid var(--border); }
+  .production-fields { max-width: 720px; }
+  .repeat-row { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) 44px; align-items: start; gap: 12px; margin: 10px 0; }
+  .row-remove { padding: 0; margin-top: 25px; font-size: 20px; }
+  .stilstand-box { margin-top: 16px; padding: 14px; border: 1px solid var(--border); border-left: 3px solid var(--stilstand); background: #fff; border-radius: var(--radius-sm); }
+  .stilstand-box .field-row { grid-template-columns: 1fr 2fr; }
+  .form-footer { position: fixed; inset: auto 0 0; z-index: 30; max-height: 48vh; max-height: 48dvh; display: flex; flex-direction: column; background: #fff; border-top: 2px solid var(--accent); box-shadow: 0 -3px 14px rgba(20,30,45,.09); padding-bottom: env(safe-area-inset-bottom); }
+  .form-footer-inner { max-width: 1140px; width: 100%; margin: auto; padding: 0 20px; display: flex; flex-direction: column; min-height: 0; }
+  .form-footer-heading { flex: none; display: flex; align-items: center; gap: 10px; min-height: 50px; color: var(--accent-dark); }
+  .form-footer-heading h2 { font-size: 16px; }
+  .form-footer-heading .hint { margin-left: auto; }
+  .new-mark { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; background: var(--accent-bg); font-size: 15px; }
+  .form-footer-body { overflow-y: auto; overscroll-behavior: contain; padding: 2px 3px 14px; }
+  .form-footer .field-row { grid-template-columns: 1fr 1fr 1.35fr 1fr 1fr; gap: 12px; }
+  .form-footer .form-actions { padding-top: 10px; margin-top: 10px; }
+  .form-footer .form-actions .save-state { flex: 1; margin: 0; }
+  .save-state, .connection-status { font-size: 13px; color: var(--text-secondary); }
+  .save-state { min-height: 22px; margin: 12px 0 2px; }
+  .save-state[data-state="saved"] { color: var(--actief); }
+  .save-state[data-state="error"], .connection-status.offline { color: var(--danger); }
+  .save-recovery { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .save-recovery:has(button:not([hidden])) { margin-top: 8px; }
+  @media (max-width: 780px) { .form-footer .field-row { grid-template-columns: repeat(2,minmax(0,1fr)); } .form-footer-heading .hint { display: none; } }
+  @media (max-width: 420px) { .form-footer .field-row { grid-template-columns: 1fr; } }
+  .toast-container { position: fixed; top: 16px; right: 16px; z-index: 90; max-width: min(420px,calc(100vw - 32px)); pointer-events: none; }
+  .toast { color: #fff; background: var(--accent-dark); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 8px; box-shadow: var(--shadow-md); }
+  .toast.success { background: var(--actief); }
+  .toast.error { background: var(--danger); }
+  dialog { border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; max-width: 440px; width: calc(100% - 32px); }
+  dialog::backdrop { background: rgba(26,34,48,.4); }
+  .pinned-note { padding: 8px 12px; background: var(--accent-bg); color: var(--accent-dark); margin: 0 0 10px; border-radius: var(--radius-sm); }
+  @media (max-width: 680px) {
+    main { padding-top: 18px; }
+    .filters { grid-template-columns: 1fr 1fr; }
+    .filters .field:first-child { grid-column: 1 / -1; }
+    .field-row, .detail-grid { grid-template-columns: 1fr 1fr; }
+    .regel-row { grid-template-columns: minmax(0,1fr) auto 12px; gap: 8px; padding: 12px; }
+    .regel-main { grid-column: 1; grid-row: 1 / 3; }
+    .regel-row .badge { grid-column: 2; grid-row: 1; }
+    .regel-meta { grid-column: 2; grid-row: 2; font-size: 11px; }
+    .expand-icon { grid-column: 3; grid-row: 1 / 3; }
+    .regel-title { gap: 3px 8px; font-size: 14px; }
+    .reg-id { width: 100%; }
+    .regel-detail { padding: 14px; }
+    .stilstand-box .field-row { grid-template-columns: 1fr; }
+    .mini-table th, .mini-table td { padding: 8px 6px; font-size: 12px; }
+  }
+  @media (max-width: 680px) { .form-footer { max-height: 40vh; max-height: 40dvh; } }
+  @media (max-width: 420px) { .field-row { grid-template-columns: 1fr; } .repeat-row { gap: 8px; } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<header class="site-header"><div class="brand">MODINE PERFORMANCE</div><h1>Productieregistratie</h1></header>
+<main id="main">
+  <div class="view-header"><h2>Registraties</h2><span class="connection-status" id="connection-status" role="status">Verbinden…</span></div>
+  <div class="filters" aria-label="Registraties filteren">
+    <div class="field"><label for="search-input">Zoeken</label><input type="search" id="search-input" maxlength="100" placeholder="Product, registratienummer, persenrij…"></div>
+    <div class="field"><label for="status-filter">Status</label><select id="status-filter"><option value="">Alle statussen</option><option value="start">Gestart</option><option value="pauze">Pauze</option><option value="stilstand">Stilstand</option><option value="hervat">Hervat</option><option value="afgerond">Afgerond</option></select></div>
+    <div class="field"><label for="period-filter">Datum / periode</label><select id="period-filter"><option value="vandaag">Vandaag</option><option value="gisteren">Gisteren</option><option value="week">Deze week</option><option value="maand">Deze maand</option><option value="alles" selected>Alles</option><option value="aangepast">Aangepaste periode</option></select></div>
+  </div>
+  <div class="custom-period" id="custom-period" hidden><div class="field"><label for="date-from">Van</label><input id="date-from" type="date"></div><div class="field"><label for="date-to">Tot en met</label><input id="date-to" type="date"></div></div>
+  <button type="button" class="btn" id="show-all">Alle registraties tonen</button>
+  <div class="sort-note" id="list-note" role="status">Registraties laden…</div>
+  <div id="list-error" class="form-error-summary" role="alert"></div>
+  <div id="pinned-list"></div>
+  <div id="regel-list" aria-label="Registraties"></div>
+  <nav class="pagination" aria-label="Pagina's met registraties"><button type="button" class="btn" id="prev-page" disabled>Vorige 50</button><span id="page-label">Pagina 1</span><button type="button" class="btn" id="next-page" disabled>Volgende 50</button></nav>
+</main>
+<section class="form-footer" id="registratie-form-sectie" aria-labelledby="form-footer-title">
+  <div class="form-footer-inner">
+    <div class="form-footer-heading"><span class="new-mark" aria-hidden="true">+</span><h2 id="form-footer-title">Nieuwe registratie</h2><span class="hint" id="footer-description">Direct invoeren en starten</span></div>
+    <div class="form-footer-body" id="form-footer-body"></div>
+  </div>
+</section>
+<dialog id="confirm-modal" aria-labelledby="modal-title" aria-describedby="modal-text"><h2 id="modal-title"></h2><p id="modal-text"></p><div class="form-actions"><button type="button" class="btn" id="modal-cancel">Annuleren</button><button type="button" class="btn btn-danger" id="modal-confirm-btn">Bevestigen</button></div></dialog>
+<div class="toast-container" id="toast-container" role="status" aria-live="polite"></div>
+<script>
+'use strict';
+// HTML en PHP staan samen in dezelfde map.
+
+const API_URL = 'db.php';
+/* Bestaande keuzelijsten en statusnamen hergebruikt. */
+
+const KEUZELIJSTEN = {
+  producten: ['Radiator type A12', 'Intercooler B7', 'Oliekoeler C4', 'Condensor D9', 'Ladeluchtkoeler E3'],
+  persenrijen: ['Persenrij 1', 'Persenrij 2', 'Persenrij 3'],
+  ovens: ['IJzer Oven 20', 'Aluminium Oven 8'],
+  storingTypes: ['Materiaaltekort', 'Persstoring', 'Machinestop', 'Kwaliteitscontrole', 'Onderhoud', 'Instelfout'],
+  stilstandRedenen: ['Materiaaltekort', 'Technische storing', 'Wachten op operator', 'Omstelling', 'Onderhoud', 'Overig'],
+  waardeNamen: ['Aantal goed', 'Aantal afkeur', 'Cyclustijd (sec)', 'Stilstandtijd (min)']
+};
+
+const STATUS_LABEL = { start: 'Gestart', pauze: 'Pauze', stilstand: 'Stilstand', hervat: 'Hervat', afgerond: 'Afgerond' };
+
+const VOLGENDE_STATUSSEN = {
+  start: ['pauze', 'stilstand', 'afgerond'],
+  pauze: ['hervat'],
+  stilstand: ['hervat'],
+  hervat: ['pauze', 'stilstand', 'afgerond'],
+  afgerond: []
+};
+
+// 1. Tekst, datum en formulieren
+function toonDatum(iso) {
+  if (!iso) {
+    return '—';
+  }
+  const parts = iso.split('-');
+  return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : iso;
+}
+// Zet de datetime die de server teruggeeft (YYYY-MM-DD HH:MM:SS) om naar NL-notatie
+
+function toonDatumTijd(value) {
+  if (!value) {
+    return '—';
+  }
+  const parts = value.split(' ');
+  if (parts.length !== 2) {
+    return value;
+  }
+  const [datum, tijd] = parts;
+  const stukjes = datum.split('-');
+  if (stukjes.length !== 3) {
+    return value;
+  }
+  const [jaar, maand, dag] = stukjes;
+  return `${dag}-${maand}-${jaar} ${tijd.slice(0, 5)}`;
+}
+// Toon invoer als tekst. Zo kan ingevoerde HTML geen script uitvoeren.
+
+function veiligeHtml(value) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  return String(value)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#039;');
+}
+/* Aanpasbare vaste velden: de naam blijft de sleutel in de bestaande tabel productwaarden.
+Voeg hier later bedrijfsvelden toe. Onbekende bestaande waarden blijven bewerkbaar. */
+
+const PRODUCTIE_VELDEN = [
+{ naam: 'Aantal goed', label: 'Aantal goed', step: '1' },
+{ naam: 'Aantal afkeur', label: 'Aantal afkeur', step: '1' }
+];
+
+const STATUS_ACTIE = { pauze: 'Pauzeren', stilstand: 'Stilstand', hervat: 'Hervatten', afgerond: 'Afronden' };
+// Alleen schermgegevens; SQL Server blijft de bron van opgeslagen registraties.
+const pagina = {
+  regels: [], details: new Map(), openRegistratieId: null, bewerkRegistratieId: null, concept: null,
+  onderbalkGewijzigd: false, detailsGewijzigd: false, bezig: false, laden: false,
+  cursor: null, vorigePaginas: [], volgendeCursor: null, heeftMeer: false,
+  ophaalNummer: 0, detailNummer: 0, vastgezetteRegistratie: null, vandaag: null, filters: null, verversen: false, werkplek: {}
+};
+function element(id) {
+  return document.getElementById(id);
+}
+let volgendVeldNummer = 1;
+
+function maakVeldId(prefix) {
+  return `${prefix}-${volgendVeldNummer++}`;
+}
+
+function vandaag() {
+  if (pagina.vandaag) {
+    return pagina.vandaag;
+  }
+  const onderdelen = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Amsterdam', year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(new Date());
+  const datum = {};
+  for (const onderdeel of onderdelen) {
+    datum[onderdeel.type] = onderdeel.value;
+  }
+  return datum.year + '-' + datum.month + '-' + datum.day;
+}
+
+function huidigeTijd() {
+  return new Date().toLocaleTimeString('nl-NL', {timeZone: 'Europe/Amsterdam', hour: '2-digit', minute: '2-digit'});
+}
+
+function nieuwConcept() {
+  return {aanvraag: '', datum: vandaag(), product: '', persenrij: pagina.werkplek.persenrij || '', oven: pagina.werkplek.oven || '', status: 'start'};
+}
+
+function statusKlasse(status) {
+  return Object.hasOwn(STATUS_LABEL, status) ? status : 'afgerond';
+}
+
+function keuzeOpties(list, current = '') {
+  const values = list.slice();
+  // Bewaar bestaande waarden die niet meer in de keuzelijst staan.
+  if (current && !values.includes(current)) {
+    values.push(current);
+  }
+  // De begintekst is geen kiesbare optie en verdwijnt uit het open menu.
+  const placeholderSelected = current === '' ? 'selected' : '';
+  let html = `<option value="" disabled hidden ${placeholderSelected}>Kies een optie</option>`;
+  for (const value of values) {
+    const selected = value === current ? 'selected' : '';
+    html += `<option value="${veiligeHtml(value)}" ${selected}>${veiligeHtml(value)}</option>`;
+  }
+  return html;
+}
+
+function toonMelding(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  element('toast-container').replaceChildren(toast);
+  setTimeout(function () {
+    return toast.remove();
+  }, 5500);
+}
+
+// 2. JSON-verzoeken naar de PHP-API
+// await wacht op het serverantwoord voordat de functie verdergaat.
+async function apiVerzoek(url = API_URL, method = 'GET', payload) {
+  const controller = new AbortController();
+  const timeout = setTimeout(function () {
+    controller.abort();
+  }, 15000);
+  const options = {
+    method: method,
+    cache: 'no-store',
+    signal: controller.signal,
+    headers: { Accept: 'application/json' }
+  };
+  if (payload !== undefined) {
+    options.headers['Content-Type'] = 'application/json';
+    options.body = JSON.stringify(payload);
+  }
+  try {
+    let response;
+    try {
+      response = await fetch(url, options);
+    } catch (error) {
+      throw new Error('Geen bevestiging van de server ontvangen. Je invoer blijft staan.');
+    }
+    let result;
+    try {
+      result = await response.json();
+    } catch (error) {
+      throw new Error('De server gaf geen geldig JSON-antwoord. Controleer of db.php bereikbaar is.');
+    }
+    if (!result || typeof result !== 'object' || Array.isArray(result)) {
+      throw new Error('De server gaf geen bruikbaar antwoord. Je invoer blijft staan.');
+    }
+    if (!response.ok || result.success === false) {
+      const error = new Error(result.message || 'De actie is mislukt.');
+      error.errors = result.errors || {};
+      error.status = response.status;
+      throw error;
+    }
+    return result;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function veldHtml(id, label, control, key) {
+  return `<div class="field"><label for="${id}">${veiligeHtml(label)}</label>${control.replace('>', ` data-key="${veiligeHtml(key || id)}" aria-describedby="${id}-error">`)}<span class="field-error" id="${id}-error"></span></div>`;
+}
+
+function wisFouten(form) {
+  form.querySelectorAll('.field-error,.form-error-summary').forEach(function (veld) {
+    return veld.textContent = '';
+  });
+  form.querySelectorAll('[aria-invalid]').forEach(function (veld) {
+    return veld.removeAttribute('aria-invalid');
+  });
+}
+
+function toonFouten(form, errors, message = 'Controleer de gemarkeerde velden.', focus = true) {
+  wisFouten(form);
+  const summary = form.querySelector('.form-error-summary');
+  if (summary) {
+    summary.textContent = message;
+  }
+  for (const [key, text] of Object.entries(errors)) {
+    const field = [...form.querySelectorAll('[data-key]')].find(function (veld) {
+      return veld.dataset.key === key;
+    });
+    if (!field) {
+      continue;
+    }
+    field.setAttribute('aria-invalid', 'true');
+    const error = element(field.getAttribute('aria-describedby'));
+    if (error) {
+      error.textContent = text;
+    }
+  }
+  if (focus) {
+    (form.querySelector('[aria-invalid="true"]') || summary)?.focus();
+  }
+}
+
+function controleerFormulier(form) {
+  const errors = {};
+  form.querySelectorAll('input,select,textarea').forEach(function (veld) {
+    if (!veld.dataset.key || veld.disabled) {
+      return;
+    }
+    if (veld.required && !veld.value.trim()) {
+      errors[veld.dataset.key] = veld.tagName === 'SELECT' ? 'Maak een keuze.' : 'Vul dit veld in.';
+    } else if (veld.type === 'number' && veld.value !== '' && (!Number.isFinite(Number(veld.value)) || Number(veld.value) < 0)) {
+      errors[veld.dataset.key] = 'Waarde kan niet negatief zijn.';
+    } else if (!veld.validity.valid) {
+      errors[veld.dataset.key] = veld.validity.stepMismatch ? 'Vul een heel aantal in.' : 'Vul een geldige waarde in.';
+    }
+  });
+  return errors;
+}
+// Vergelijk de invoer met de laatst bevestigde inhoud van het formulier.
+
+function formulierInhoud(form) {
+  const values = [];
+  for (const field of form.querySelectorAll('input,select,textarea')) {
+    let name = field.dataset.key;
+    if (field.hasAttribute('data-name')) {
+      name = 'naam';
+    }
+    if (field.hasAttribute('data-value')) {
+      name = 'waarde';
+    }
+    let value = field.value;
+    if (field.type === 'checkbox' || field.type === 'radio') {
+      value = field.checked;
+    }
+    values.push([name, value, field.validity.badInput]);
+  }
+  return JSON.stringify(values);
+}
+
+function markeerOpgeslagen(form) {
+  if (!form) {
+    return;
+  }
+  form.dataset.opgeslagenInhoud = formulierInhoud(form);
+  delete form.dataset.dirty;
+}
+
+function heeftWijzigingen(form) {
+  if (!form) {
+    return false;
+  }
+  const dirty = formulierInhoud(form) !== form.dataset.opgeslagenInhoud;
+  if (dirty) {
+    form.dataset.dirty = 'true';
+  } else {
+    delete form.dataset.dirty;
+  }
+  return dirty;
+}
+
+function controleerDetailWijzigingen() {
+  document.querySelectorAll('.regel-detail form').forEach(heeftWijzigingen);
+  pagina.detailsGewijzigd = document.querySelector('.regel-detail form[data-dirty="true"]') !== null;
+  return pagina.detailsGewijzigd;
+}
+
+function controleerOnderbalkWijzigingen() {
+  pagina.onderbalkGewijzigd = heeftWijzigingen(element('registration-form'));
+  return pagina.onderbalkGewijzigd;
+}
+
+function bereidDetailFormulierenVoor(root = element('main')) {
+  root.querySelectorAll('.regel-detail form').forEach(function (form) {
+    if (form.dataset.opgeslagenInhoud === undefined) {
+      markeerOpgeslagen(form);
+      form.dataset.revision = pagina.details.get(formulierRegistratieId(form))?.revision || '';
+    }
+  });
+  controleerDetailWijzigingen();
+}
+
+function herstelDetailInvoer() {
+  // Herstel de laatst opgeslagen inhoud.
+  const cards = new Set([...document.querySelectorAll('.regel-detail form[data-dirty="true"]')]
+  .map(function (form) {
+    return form.closest('.regel-card');
+  }));
+  for (const card of cards) {
+    const id = Number(card.id.replace('card-', ''));
+    const regel = pagina.details.get(id);
+    if (regel) {
+      card.querySelectorAll('form').forEach(function (form) {
+        return opslagWachtrij.delete(form);
+      });
+      card.querySelector('.regel-detail-wrapper').innerHTML = registratieDetailsHtml(regel);
+    }
+  }
+  bereidDetailFormulierenVoor();
+}
+let bevestigingOpen = false;
+
+function vraagBevestiging(title, text, label = 'Doorgaan') {
+  // Snel herhaalde acties mogen niet meerdere dialogen of callbacks starten.
+  if (bevestigingOpen) {
+    return Promise.resolve(false);
+  }
+  bevestigingOpen = true;
+  element('modal-title').textContent = title;
+  element('modal-text').textContent = text;
+  element('modal-confirm-btn').textContent = label;
+  element('modal-cancel').textContent = label === 'Invoer weggooien' ? 'Terug' : 'Annuleren';
+  const dialog = element('confirm-modal');
+  dialog.returnValue = '';
+  dialog.showModal();
+  element('modal-cancel').focus();
+  return new Promise(function (resolve) {
+    return dialog.addEventListener('close', function () {
+      bevestigingOpen = false;
+      resolve(dialog.returnValue === 'ok');
+    }, {once: true});
+  });
+}
+element('modal-cancel').onclick = function () {
+  return element('confirm-modal').close('cancel');
+};
+element('modal-confirm-btn').onclick = function () {
+  return element('confirm-modal').close('ok');
+};
+
+async function magDetailsVerlaten() {
+  await slaOpenFormulierenOp();
+  if (!controleerDetailWijzigingen()) {
+    return true;
+  }
+  const ok = await vraagBevestiging('Niet-opgeslagen invoer', 'De invoer in deze registratie is nog niet opgeslagen. Wil je die invoer weggooien?', 'Invoer weggooien');
+  if (ok) {
+    herstelDetailInvoer();
+  }
+  return ok;
+}
+
+function stelBezigIn(value) {
+  pagina.bezig = value;
+  // Hef alleen onze eigen tijdelijke blokkering op.
+  document.querySelectorAll('[data-busy-disabled]').forEach(function (veld) {
+    veld.disabled = false;
+    delete veld.dataset.busyDisabled;
+  });
+  const lock = function (selector) {
+    return document.querySelectorAll(selector).forEach(function (veld) {
+      if (!veld.disabled) {
+        veld.dataset.busyDisabled = 'true';
+        veld.disabled = true;
+      }
+    });
+  };
+  if (pagina.bezig || pagina.laden) {
+    // Tijdens verversen mag nieuw getypte invoer niet door het serverantwoord verdwijnen.
+    lock('.regel-detail input, .regel-detail select, .regel-detail textarea, #form-footer-body input, #form-footer-body select, [data-add-value], [data-remove-value]');
+  }
+  if (pagina.bezig) {
+    lock('.filters input, .filters select, .custom-period input, #show-all');
+  }
+  document.querySelectorAll('[data-mutation], #start-btn, #clear-btn, #done-btn')
+  .forEach(function (veld) {
+    return veld.disabled = pagina.bezig || pagina.laden;
+  });
+  werkPagineringBij();
+  if (!pagina.bezig && !pagina.laden) {
+    startOpslagTimer();
+  }
+}
+
+function leesFilters() {
+  return {q: element('search-input').value.trim(), status: element('status-filter').value, periode: element('period-filter').value, van: element('date-from').value, tot: element('date-to').value};
+}
+
+function herstelFilters() {
+  if (!pagina.filters) {
+    return;
+  }
+  const filters = pagina.filters;
+  element('search-input').value = filters.q;
+  element('status-filter').value = filters.status;
+  element('period-filter').value = filters.periode;
+  element('date-from').value = filters.van;
+  element('date-to').value = filters.tot;
+  element('custom-period').hidden = filters.periode !== 'aangepast';
+}
+
+// 3. Registraties ophalen, filteren en tonen
+async function laadRegistraties(cursor = null, previous = [], reset = false) {
+  if (pagina.bezig) {
+    return;
+  }
+  const filters = leesFilters();
+  if (filters.periode === 'aangepast' && (!filters.van || !filters.tot || filters.van > filters.tot)) {
+    element('list-error').textContent = 'Kies een geldige begin- en einddatum.';
+    return;
+  }
+  if (!await magDetailsVerlaten()) {
+    herstelFilters();
+    return;
+  }
+  const request = ++pagina.ophaalNummer;
+  pagina.laden = true;
+  element('regel-list').setAttribute('aria-busy', 'true');
+  stelBezigIn(pagina.bezig);
+  element('list-error').textContent = '';
+  const params = new URLSearchParams(filters);
+  if (cursor) {
+    params.set('before', cursor);
+  }
+  try {
+    const result = await apiVerzoek(`${API_URL}?${params}`);
+    if (request !== pagina.ophaalNummer) {
+      return;
+    }
+    if (!Array.isArray(result.regels)) {
+      throw new Error('Gebruik de bijbehorende db.php samen met deze pagina.');
+    }
+    pagina.regels = result.regels;
+    pagina.totaal = result.totalFiltered;
+    pagina.details.clear();
+    pagina.openRegistratieId = null;
+    pagina.detailNummer++;
+    pagina.cursor = cursor;
+    pagina.vorigePaginas = previous;
+    pagina.volgendeCursor = result.nextCursor;
+    pagina.heeftMeer = result.hasMore;
+    pagina.vandaag = result.today;
+    pagina.filters = filters;
+    if (result.statusOvergangen) {
+      Object.assign(VOLGENDE_STATUSSEN, result.statusOvergangen);
+    }
+    if (reset) {
+      pagina.vastgezetteRegistratie = null;
+    }
+    toonRegistratieLijst();
+    toonVerbinding(true);
+  } catch (error) {
+    if (request === pagina.ophaalNummer) {
+      element('list-error').textContent = error.message;
+      toonVerbinding(false);
+    }
+  } finally {
+    if (request === pagina.ophaalNummer) {
+      pagina.laden = false;
+      element('regel-list').removeAttribute('aria-busy');
+      stelBezigIn(pagina.bezig);
+    }
+  }
+}
+
+function werkPagineringBij() {
+  element('prev-page').disabled = pagina.bezig || pagina.laden || pagina.vorigePaginas.length === 0;
+  element('next-page').disabled = pagina.bezig || pagina.laden || !pagina.heeftMeer;
+  element('page-label').textContent = `Pagina ${pagina.vorigePaginas.length + 1}`;
+}
+
+function registratieKaartHtml(registratie) {
+  const id = Number(registratie.id);
+  const open = pagina.openRegistratieId === id;
+  const status = statusKlasse(registratie.status);
+  return `<article class="regel-card s-${status}" id="card-${id}">
+  <button type="button" class="regel-row" data-expand="${id}" aria-expanded="${open}" aria-controls="detail-wrapper-${id}">
+  <span class="regel-main"><span class="regel-title"><span class="reg-id">${veiligeHtml(registratie.regId || registratie.reg_id)}</span>${veiligeHtml(registratie.product)}</span><span class="regel-sub">${veiligeHtml(registratie.persenrij)} · ${veiligeHtml(registratie.oven)}</span></span>
+  <span class="badge s-${status}">${veiligeHtml(STATUS_LABEL[registratie.status] || registratie.status)}</span>
+  <span class="regel-meta">${veiligeHtml(registratie.aangemaakt)} · ${veiligeHtml(toonDatum(registratie.datum))}</span><span class="expand-icon" aria-hidden="true">▼</span>
+  </button><div class="regel-detail-wrapper" id="detail-wrapper-${id}" ${open ? '' : 'hidden'}>${open && pagina.details.has(id) ? registratieDetailsHtml(pagina.details.get(id)) : ''}</div>
+  </article>`;
+}
+
+function toonRegistratieLijst() {
+  element('list-note').textContent = `${pagina.regels.length + (pagina.vastgezetteRegistratie && !pagina.regels.some(function (registratie) {
+      return Number(registratie.id) === Number(pagina.vastgezetteRegistratie.id);
+    }) ? 1 : 0)} registraties zichtbaar · ${pagina.totaal ?? pagina.regels.length} binnen selectie · ${element('period-filter').selectedOptions[0].textContent} · Nieuwste eerst`;
+  const pinnedOutside = pagina.vastgezetteRegistratie && !pagina.regels.some(function (registratie) {
+    return Number(registratie.id) === Number(pagina.vastgezetteRegistratie.id);
+  });
+  element('pinned-list').innerHTML = pinnedOutside ? `<p class="pinned-note">Laatst opgeslagen registratie · Buiten deze filterselectie of pagina</p>${registratieKaartHtml(pagina.vastgezetteRegistratie)}` : '';
+  element('regel-list').innerHTML = pagina.regels.length ? pagina.regels.map(registratieKaartHtml).join('') : pagina.vastgezetteRegistratie ? '' : '<div class="empty"><p>Geen registraties binnen deze selectie.</p><p class="hint">Pas de filters aan of vul onderaan een nieuwe registratie in.</p></div>';
+  bereidDetailFormulierenVoor();
+}
+
+async function wisselRegistratieOpen(id) {
+  if (pagina.bezig || pagina.laden || !await magDetailsVerlaten()) {
+    return;
+  }
+  const previous = pagina.openRegistratieId;
+  if (previous) {
+    element(`detail-wrapper-${previous}`)?.setAttribute('hidden', '');
+    document.querySelector(`[data-expand="${previous}"]`)?.setAttribute('aria-expanded', 'false');
+  }
+  const ticket = ++pagina.detailNummer;
+  if (previous === id) {
+    pagina.openRegistratieId = null;
+    return;
+  }
+  pagina.openRegistratieId = id;
+  const wrapper = element(`detail-wrapper-${id}`);
+  if (!wrapper) {
+    return;
+  }
+  wrapper.hidden = false;
+  document.querySelector(`[data-expand="${id}"]`).setAttribute('aria-expanded', 'true');
+  wrapper.innerHTML = '<div class="regel-detail" role="status">Details laden…</div>';
+  try {
+    const result = await apiVerzoek(`${API_URL}?id=${id}`);
+    if (ticket !== pagina.detailNummer || pagina.openRegistratieId !== id) {
+      return;
+    }
+    pagina.details.set(id, result.regel);
+    werkRegistratieBij(result.regel);
+    wrapper.innerHTML = registratieDetailsHtml(result.regel);
+    bereidDetailFormulierenVoor(wrapper);
+  } catch(error) {
+    if (ticket === pagina.detailNummer) {
+      wrapper.innerHTML = `<div class="regel-detail" role="alert">${veiligeHtml(error.message)} Klap de registratie opnieuw open om het nogmaals te proberen.</div>`;
+    }
+  }
+}
+
+
+
+function tabelHtml(koppen, rijen) {
+  let html = '<table class="mini-table"><thead><tr>';
+  for (const kop of koppen) {
+    html += '<th scope="col">' + veiligeHtml(kop) + '</th>';
+  }
+  html += '</tr></thead><tbody>';
+  for (const rij of rijen) {
+    html += '<tr>';
+    for (const cel of rij) {
+      html += '<td>' + veiligeHtml(cel) + '</td>';
+    }
+    html += '</tr>';
+  }
+  return html + '</tbody></table>';
+}
+
+function stilstandenHtml(stilstanden = []) {
+  if (stilstanden.length === 0) {
+    return '<p class="mini-empty">Geen automatische stilstanden.</p>';
+  }
+  const rijen = [];
+  for (const stilstand of stilstanden) {
+    const einde = stilstand.einde ? toonDatumTijd(stilstand.einde) : 'Lopend';
+    let duur = 'Wordt berekend bij hervatten';
+    if (stilstand.duur !== null) {
+      duur = Number(stilstand.duur).toLocaleString('nl-NL') + ' min';
+    }
+    rijen.push([toonDatumTijd(stilstand.start), einde, duur, stilstand.reden || 'Nog invullen']);
+  }
+  return tabelHtml(['Start', 'Hervat', 'Duur', 'Reden'], rijen);
+}
+
+function opgeslagenStoringenHtml(storingen) {
+  if (storingen.length === 0) {
+    return '';
+  }
+  const rijen = [];
+  for (const storing of storingen) {
+    rijen.push([storing.type, storing.tijdstip, storing.duur + ' min']);
+  }
+  return `<details>
+    <summary>Opgeslagen storingen (${storingen.length})</summary>
+    ${tabelHtml(['Type', 'Tijdstip', 'Duur'], rijen)}
+  </details>`;
+}
+
+function statusHistorieHtml(historie = []) {
+  if (historie.length === 0) {
+    return '<p class="mini-empty">Nog geen statusverloop.</p>';
+  }
+  const rijen = [];
+  for (const stap of historie) {
+    const tijd = stap.aangemaakt ? toonDatumTijd(stap.aangemaakt) : stap.tijd;
+    rijen.push([tijd, STATUS_LABEL[stap.status] || stap.status, stap.extra || '—']);
+  }
+  return tabelHtml(['Datum / tijd', 'Status', 'Extra informatie'], rijen);
+}
+
+function wijzigingenTableHtml(wijzigingen = []) {
+  if (wijzigingen.length === 0) {
+    return '<p class="mini-empty">Nog geen wijzigingen.</p>';
+  }
+  const rijen = [];
+  for (const wijziging of wijzigingen) {
+    rijen.push([
+      wijziging.veld,
+      wijziging.oude_waarde || '—',
+      wijziging.nieuwe_waarde || '—',
+      toonDatumTijd(wijziging.gewijzigd_op)
+    ]);
+  }
+  return tabelHtml(['Veld', 'Oud', 'Nieuw', 'Gewijzigd'], rijen);
+}
+
+function extraGegevenNamen() {
+  const namen = [];
+  for (const naam of KEUZELIJSTEN.waardeNamen) {
+    let isVastVeld = false;
+    for (const veld of PRODUCTIE_VELDEN) {
+      if (veld.naam === naam) {
+        isVastVeld = true;
+      }
+    }
+    // Aantal goed en Aantal afkeur hebben hierboven al een eigen veld.
+    if (!isVastVeld) {
+      namen.push(naam);
+    }
+  }
+  return namen;
+}
+
+function waardeRowHtml(productwaarde = {}) {
+  const id = maakVeldId('p');
+  const naamVeld = `<select id="${id}-naam" data-name required>${keuzeOpties(extraGegevenNamen(), productwaarde.naam || '')}</select>`;
+  return `<div class="repeat-row">${veldHtml(`${id}-naam`, 'Gegeven', naamVeld, `${id}.naam`)}${veldHtml(`${id}-waarde`, 'Waarde', `<input id="${id}-waarde" data-value type="number" min="0" step="any" required value="${veiligeHtml(productwaarde.waarde ?? '')}">`, `${id}.waarde`)}<button type="button" class="btn row-remove" data-remove-value aria-label="Gegeven verwijderen">×</button></div>`;
+}
+
+function productieHtml(registratie) {
+  const id = Number(registratie.id);
+  let vasteVeldenHtml = '';
+  let extraVeldenHtml = '';
+  let aantalExtra = 0;
+
+  for (let index = 0; index < PRODUCTIE_VELDEN.length; index++) {
+    const veld = PRODUCTIE_VELDEN[index];
+    let waarde = '';
+    for (const gegeven of registratie.productwaarden) {
+      if (gegeven.naam === veld.naam) {
+        waarde = gegeven.waarde;
+      }
+    }
+    const veldId = `prod-${id}-${index}`;
+    const invoer = `<input id="${veldId}" data-fixed="${veiligeHtml(veld.naam)}"
+      type="number" min="0" step="${veld.step}" value="${veiligeHtml(waarde)}">`;
+    vasteVeldenHtml += veldHtml(veldId, veld.label, invoer, `fixed.${index}`);
+  }
+
+  for (const gegeven of registratie.productwaarden) {
+    let isVastVeld = false;
+    for (const veld of PRODUCTIE_VELDEN) {
+      if (gegeven.naam === veld.naam) {
+        isVastVeld = true;
+      }
+    }
+    if (!isVastVeld) {
+      extraVeldenHtml += waardeRowHtml(gegeven);
+      aantalExtra++;
+    }
+  }
+
+  const open = aantalExtra > 0 ? 'open' : '';
+  const aantalTekst = aantalExtra > 0 ? ` (${aantalExtra})` : '';
+  return `<form novalidate data-production="${id}" class="production-fields">
+    <div class="field-row">${vasteVeldenHtml}</div>
+    <details ${open}>
+      <summary>Overige productiegegevens${aantalTekst}</summary>
+      <div data-extra-values>${extraVeldenHtml}</div>
+      <button type="button" class="btn" data-add-value>+ Gegeven toevoegen</button>
+    </details>
+    <div class="form-error-summary" role="alert" tabindex="-1"></div>
+    ${opslagMeldingHtml()}
+  </form>`;
+}
+
+function stilstandRedenHtml(registratie) {
+  const last = registratie.statusHistorie.at(-1);
+  const id = Number(registratie.id);
+  const [reden = '', ...opmerking] = (last?.extra || '').split(' — ');
+  return `<form novalidate class="stilstand-box" data-reason="${id}"><h3>Reden van stilstand</h3><p class="hint">De starttijd is vastgelegd. De reden wordt automatisch opgeslagen.</p><div class="field-row">${veldHtml(`reden-${id}`, 'Reden', `<select id="reden-${id}" required>${keuzeOpties(KEUZELIJSTEN.stilstandRedenen, reden)}</select>`, 'reden')}${veldHtml(`opmerking-${id}`, 'Opmerking (optioneel)', `<input id="opmerking-${id}" maxlength="150" value="${veiligeHtml(opmerking.join(' — '))}">`, 'opmerking')}</div><div class="form-error-summary" role="alert" tabindex="-1"></div>${opslagMeldingHtml()}</form>`;
+}
+
+function registratieDetailsHtml(registratie) {
+  const id = Number(registratie.id);
+  const historie = registratie.statusHistorie;
+  const laatsteStap = historie[historie.length - 1];
+  const statusSinds = laatsteStap ? toonDatumTijd(laatsteStap.aangemaakt) : registratie.aangemaakt;
+  const volgendeStatussen = registratie.toegestaneStatussen || VOLGENDE_STATUSSEN[registratie.status] || [];
+  const gegevens = [
+    ['Aanvraagnummer', registratie.aanvraag || '—'],
+    ['Datum', toonDatum(registratie.datum)],
+    ['Product', registratie.product],
+    ['Persenrij', registratie.persenrij],
+    ['Oven', registratie.oven]
+  ];
+  let gegevensHtml = '';
+  for (const gegeven of gegevens) {
+    gegevensHtml += `<div class="detail-field">
+      <dt>${veiligeHtml(gegeven[0])}</dt><dd>${veiligeHtml(gegeven[1])}</dd>
+    </div>`;
+  }
+  let knoppenHtml = '';
+  for (const status of volgendeStatussen) {
+    const knopKlasse = status === 'hervat' ? 'btn-primary' : '';
+    knoppenHtml += `<button type="button" class="btn ${knopKlasse}" data-mutation
+      data-status="${veiligeHtml(status)}" data-id="${id}">${veiligeHtml(STATUS_ACTIE[status])}</button>`;
+  }
+  let redenHtml = '';
+  if (registratie.status === 'stilstand') {
+    redenHtml = stilstandRedenHtml(registratie);
+  }
+  return `<div class="regel-detail">
+    <div class="form-error-summary action-error" role="alert" tabindex="-1"></div>
+    <dl class="detail-grid">${gegevensHtml}</dl>
+    <section class="detail-section">
+      <h3>Status</h3>
+      <p>${veiligeHtml(STATUS_LABEL[registratie.status])} sinds ${veiligeHtml(statusSinds)}</p>
+      <div class="status-actions">${knoppenHtml}</div>
+      ${redenHtml}
+    </section>
+    <section class="detail-section">
+      <h3>Productiegegevens</h3>
+      ${productieHtml(registratie)}
+    </section>
+    <section class="detail-section">
+      <h3>Storingen en stilstand</h3>
+      ${stilstandenHtml(registratie.stilstanden)}
+      ${opgeslagenStoringenHtml(registratie.storingen)}
+      <details>
+        <summary>Storing achteraf toevoegen</summary>
+        ${storingFormulierHtml(id)}
+      </details>
+    </section>
+    <section class="detail-section">
+      <h3>Statusverloop</h3>
+      ${statusHistorieHtml(historie)}
+    </section>
+    <details class="detail-section">
+      <summary>Wijzigingshistorie (${registratie.wijzigingen.length})</summary>
+      ${wijzigingenTableHtml(registratie.wijzigingen)}
+    </details>
+    <div class="detail-actions">
+      <button type="button" class="btn" data-edit="${id}" data-mutation>Bewerken</button>
+      <button type="button" class="btn btn-danger" data-delete="${id}" data-mutation>Verwijderen</button>
+    </div>
+  </div>`;
+}
+
+function storingFormulierHtml(id) {
+  return `<form novalidate data-storing="${id}"><p class="hint">Voor een al bekende storing. Gebruik de statusknop Stilstand om vanaf nu automatisch te meten.</p><div class="field-row">${veldHtml(`storing-type-${id}`, 'Type', `<select id="storing-type-${id}" required>${keuzeOpties(KEUZELIJSTEN.storingTypes)}</select>`, 'storingen.0.type')}${veldHtml(`storing-tijd-${id}`, 'Tijdstip', `<input id="storing-tijd-${id}" type="time" required value="${huidigeTijd()}">`, 'storingen.0.tijdstip')}${veldHtml(`storing-duur-${id}`, 'Duur (minuten)', `<input id="storing-duur-${id}" type="number" min="0" max="9999.99" step="0.01" required>`, 'storingen.0.duur')}</div><div class="form-error-summary" role="alert" tabindex="-1"></div>${opslagMeldingHtml('Vul de storing in. Deze wordt toegevoegd zodra je dit onderdeel verlaat.')}</form>`;
+}
+
+function werkRegistratieBij(registratie) {
+  const index = pagina.regels.findIndex(function (item) {
+    return Number(item.id) === Number(registratie.id);
+  });
+  if(index >= 0) {
+    pagina.regels[index] = registratie;
+  }
+  if(pagina.vastgezetteRegistratie && Number(pagina.vastgezetteRegistratie.id) === Number(registratie.id)) {
+    pagina.vastgezetteRegistratie = registratie;
+  }
+  const header = element(`card-${Number(registratie.id)}`)?.querySelector('.regel-row');
+  if(header) {
+    const temp = document.createElement('div');
+    temp.innerHTML = registratieKaartHtml(registratie);
+    header.replaceWith(temp.querySelector('.regel-row'));
+    element(`card-${Number(registratie.id)}`).className = `regel-card s-${statusKlasse(registratie.status)}`;
+  }
+}
+// Houd een zojuist gewijzigde registratie zichtbaar als die niet meer bij de filters past.
+
+function pastBijFilters(registratie) {
+  const filters = pagina.filters;
+  if(!filters) {
+    return true;
+  }
+  if(filters.status && registratie.status !== filters.status) {
+    return false;
+  }
+  if(filters.q && ![registratie.regId, registratie.reg_id, registratie.product, registratie.persenrij, registratie.oven, registratie.aanvraag].join(' ').toLowerCase().includes(filters.q.toLowerCase())) {
+    return false;
+  }
+  const base = new Date(`${vandaag()}T12:00:00Z`);
+  const iso = function (date) {
+    return date.toISOString().slice(0, 10);
+  };
+  let from = null;
+  let to = null;
+  if(filters.periode === 'vandaag') {
+    from = to = vandaag();
+  }
+  if(filters.periode === 'gisteren') {
+    base.setUTCDate(base.getUTCDate() - 1);
+    from = to = iso(base);
+  }
+  if(filters.periode === 'week') {
+    base.setUTCDate(base.getUTCDate() - (base.getUTCDay() + 6) % 7);
+    from = iso(base);
+    base.setUTCDate(base.getUTCDate() + 6);
+    to = iso(base);
+  }
+  if(filters.periode === 'maand') {
+    base.setUTCDate(1);
+    from = iso(base);
+    base.setUTCMonth(base.getUTCMonth() + 1);
+    base.setUTCDate(0);
+    to = iso(base);
+  }
+  if(filters.periode === 'aangepast') {
+    from = filters.van;
+    to = filters.tot;
+  }
+  return !from || (registratie.datum >= from && registratie.datum <= to);
+}
+
+// 4. Bevestigde wijzigingen verwerken
+function verwerkOpgeslagenRegistratie(registratie, pin = false, savedForm = null, sentSnapshot = null, localUpdate = true) {
+  pagina.ophaalNummer++;
+  // Negeer oudere ophaalverzoeken.
+  const id = Number(registratie.id);
+  const previous = pagina.details.get(id);
+  const wrapper = element(`detail-wrapper-${id}`);
+  const focused = document.activeElement;
+  const selection = focused && 'selectionStart' in focused ? [focused.selectionStart, focused.selectionEnd] : null;
+  // Bewaar invoer en cursor tijdens het verversen van de kaarten.
+  const forms = [...document.querySelectorAll('.regel-detail form')].filter(function (form) {
+    return !(form === savedForm && form.dataset.storing) && (localUpdate || heeftWijzigingen(form));
+  });
+  const expandedSections = [...(wrapper?.querySelectorAll('details[open]') || [])].map(function (section) {
+    return section.querySelector('summary')?.textContent;
+  });
+  if (savedForm && !savedForm.dataset.storing) {
+    savedForm.dataset.opgeslagenInhoud = sentSnapshot ?? formulierInhoud(savedForm);
+    heeftWijzigingen(savedForm);
+  }
+  pagina.details.set(id, registratie);
+  for (const form of forms) {
+    if (localUpdate && formulierRegistratieId(form) === id && form.dataset.revision === previous?.revision && !form.dataset.saveBlocked) {
+      form.dataset.revision = registratie.revision;
+    }
+  }
+  if (savedForm) {
+    savedForm.dataset.revision = registratie.revision;
+  }
+  if (localUpdate && pagina.bewerkRegistratieId === id && pagina.concept.revision === previous?.revision && !element('registration-form').dataset.saveBlocked) {
+    pagina.concept.revision = registratie.revision;
+    element('registration-form').dataset.revision = registratie.revision;
+  }
+  werkRegistratieBij(registratie);
+  const inList = pagina.regels.some(function (item) {
+    return Number(item.id) === id;
+  });
+  if (pastBijFilters(registratie) && (inList || pagina.cursor === null)) {
+    if (!inList) {
+      const rows = [registratie, ...pagina.regels].sort(function (a, b) {
+        return Number(b.id) - Number(a.id);
+      });
+      pagina.heeftMeer = pagina.heeftMeer || rows.length > 50;
+      pagina.regels = rows.slice(0, 50);
+    }
+    if (Number(pagina.vastgezetteRegistratie?.id) === id) {
+      pagina.vastgezetteRegistratie = null;
+    }
+  } else {
+    pagina.regels = pagina.regels.filter(function (item) {
+      return Number(item.id) !== id;
+    });
+    pagina.vastgezetteRegistratie = registratie;
+  }
+  // De cursor volgt de laatste zichtbare rij, ook na invoegen op een volle pagina.
+  if (pagina.heeftMeer && pagina.regels.length) {
+    pagina.volgendeCursor = pagina.regels.at(-1).id;
+  }
+  if (pin) {
+    pagina.openRegistratieId = id;
+  }
+  toonRegistratieLijst();
+  werkPagineringBij();
+  for (const form of forms) {
+    const kind = ['production', 'reason', 'storing'].find(function (key) {
+      return form.dataset[key];
+    });
+    document.querySelector(`[data-${kind}="${formulierRegistratieId(form)}"]`)?.replaceWith(form);
+  }
+  const newWrapper = element(`detail-wrapper-${id}`);
+  newWrapper?.querySelectorAll('details').forEach(function (section) {
+    if (expandedSections.includes(section.querySelector('summary')?.textContent)) {
+      section.open = true;
+    }
+  });
+  bereidDetailFormulierenVoor();
+  if (focused?.isConnected && focused.closest('form')) {
+    focused.focus({preventScroll: true});
+    if (selection && selection[0] !== null) {
+      focused.setSelectionRange?.(...selection);
+    }
+  }
+  if (savedForm?.dataset.storing) {
+    opslagWachtrij.delete(savedForm);
+    const reset = document.querySelector(`[data-storing="${id}"]`);
+    if (reset) {
+      toonOpslagStatus(reset, 'saved', 'Storing toegevoegd. Je kunt een volgende storing invullen.');
+    }
+  }
+}
+
+async function wijzigRegistratie(id, payload, form = null) {
+  if(pagina.bezig || pagina.laden) {
+    return null;
+  }
+  await wachtOpOpslag();
+  if (pagina.bezig || pagina.laden) {
+    return null;
+  }
+  const current = pagina.details.get(Number(id));
+  if(!current) {
+    return null;
+  }
+  stelBezigIn(true);
+  try {
+    const result = await apiVerzoek(API_URL, 'PUT', {id: Number(id), revision: current.revision, ...payload});
+    verwerkOpgeslagenRegistratie(result.regel, false, form);
+    toonMelding(result.message, 'success');
+    return result.regel;
+  } catch(error) {
+    if(form && form.isConnected) {
+      toonFouten(form, error.errors || {}, error.message);
+    } else {
+      const box = element(`detail-wrapper-${id}`)?.querySelector('.action-error');
+      if(box) {
+        box.textContent = error.message;
+        box.focus();
+      }
+    }
+    if(error.status === 409) {
+      toonMelding('Je invoer blijft staan. Kopieer die zo nodig en open de registratie opnieuw om de actuele gegevens te laden.', 'error');
+    }
+    return null;
+  } finally {
+    stelBezigIn(false);
+    controleerDetailWijzigingen();
+  }
+}
+
+async function wijzigStatus(id, status) {
+  if(pagina.bezig || !await magDetailsVerlaten()) {
+    return;
+  }
+  const registratie = pagina.details.get(id);
+  if(!registratie || !(registratie.toegestaneStatussen || VOLGENDE_STATUSSEN[registratie.status]).includes(status)) {
+    return;
+  }
+  if(registratie.status === 'stilstand' && !registratie.statusHistorie.at(-1)?.extra) {
+    const form = document.querySelector(`[data-reason="${id}"]`);
+    toonFouten(form, {reden: 'Selecteer eerst de reden van de stilstand.'});
+    return;
+  }
+  const saved = await wijzigRegistratie(id, {action: 'status', status});
+  if(saved?.status === 'stilstand') {
+    element(`reden-${id}`)?.focus();
+  } else {
+    document.querySelector(`[data-expand="${id}"]`)?.focus({preventScroll: true});
+  }
+}
+
+function leesProductie(form) {
+  const values = [];
+  const keys = [];
+  for (const field of form.querySelectorAll('[data-fixed]')) {
+    if (field.value !== '') {
+      values.push({naam: field.dataset.fixed, waarde: field.value});
+      keys.push({naam: field.dataset.key, waarde: field.dataset.key});
+    }
+  }
+  for (const row of form.querySelectorAll('[data-extra-values] .repeat-row')) {
+    const name = row.querySelector('[data-name]');
+    const value = row.querySelector('[data-value]');
+    values.push({naam: name.value.trim(), waarde: value.value});
+    keys.push({naam: name.dataset.key, waarde: value.dataset.key});
+  }
+  return {values: values, keys: keys};
+}
+
+// 5. Nieuwe registraties en de onderbalk
+async function startBewerken(id) {
+  if (pagina.bezig || pagina.laden) {
+    return;
+  }
+  if (pagina.bewerkRegistratieId === id) {
+    element('f-aanvraag').focus();
+    return;
+  }
+  if (!await magDetailsVerlaten()) {
+    return;
+  }
+  if (pagina.bewerkRegistratieId) {
+    if (!await rondBewerkenAf()) {
+      return;
+    }
+  } else if (controleerOnderbalkWijzigingen() && !await vraagBevestiging('Nieuwe registratie nog niet gestart', 'Wil je deze nog niet gestarte invoer weggooien?', 'Invoer weggooien')) {
+    return;
+  }
+  const registratie = pagina.details.get(id);
+  if (!registratie) {
+    return;
+  }
+  pagina.bewerkRegistratieId = id;
+  pagina.concept = {...registratie};
+  toonOnderbalk();
+  element('f-aanvraag').focus();
+}
+
+function renderFormulierFooterBody() {
+  const concept = pagina.concept;
+  return `<form id="registration-form" novalidate><div class="form-error-summary" id="form-errors" role="alert" tabindex="-1"></div><div class="field-row">
+  ${veldHtml('f-aanvraag', 'Aanvraagnummer (optioneel)', `<input id="f-aanvraag" maxlength="50" value="${veiligeHtml(concept.aanvraag)}">`, 'aanvraag')}
+  ${veldHtml('f-datum', 'Datum *', `<input id="f-datum" type="date" required value="${veiligeHtml(concept.datum)}">`, 'datum')}
+  ${veldHtml('f-product', 'Product *', `<select id="f-product" required>${keuzeOpties(KEUZELIJSTEN.producten, concept.product)}</select>`, 'product')}
+  ${veldHtml('f-persenrij', 'Persenrij *', `<select id="f-persenrij" required>${keuzeOpties(KEUZELIJSTEN.persenrijen, concept.persenrij)}</select>`, 'persenrij')}
+  ${veldHtml('f-oven', 'Oven *', `<select id="f-oven" required>${keuzeOpties(KEUZELIJSTEN.ovens, concept.oven)}</select>`, 'oven')}
+  </div><div class="form-actions">${pagina.bewerkRegistratieId ? `${opslagMeldingHtml()}<button type="button" class="btn" id="done-btn">Klaar</button>` : '<button type="submit" class="btn btn-primary" id="start-btn">Registratie starten</button><button type="button" class="btn" id="clear-btn">Leegmaken</button>'}</div></form>`;
+}
+
+function leesConcept() {
+  if(!pagina.concept) {
+    return;
+  }
+  for(const key of ['aanvraag', 'datum', 'product', 'persenrij', 'oven']) {
+    if(element(`f-${key}`)) {
+      pagina.concept[key] = element(`f-${key}`).value;
+    }
+  }
+}
+
+function toonOnderbalk() {
+  element('form-footer-body').innerHTML = renderFormulierFooterBody();
+  markeerOpgeslagen(element('registration-form'));
+  controleerOnderbalkWijzigingen();
+  element('registration-form').dataset.revision = pagina.concept.revision || '';
+  werkOnderbalkTitelBij();
+}
+
+function werkOnderbalkTitelBij() {
+  element('form-footer-title').textContent = pagina.bewerkRegistratieId ? `Bewerken — ${pagina.concept.regId || pagina.concept.reg_id}` : 'Nieuwe registratie';
+  element('footer-description').textContent = pagina.bewerkRegistratieId ? '' : 'Direct invoeren en starten';
+}
+
+function resetFormulier() {
+  opslagWachtrij.delete(element('registration-form'));
+  pagina.bewerkRegistratieId = null;
+  pagina.concept = nieuwConcept();
+  pagina.onderbalkGewijzigd = false;
+  toonOnderbalk();
+}
+
+async function maakNieuweInvoerLeeg() {
+  if (pagina.bezig) {
+    return;
+  }
+  if (controleerOnderbalkWijzigingen() && !await vraagBevestiging('Invoer leegmaken', 'Wil je de nog niet gestarte registratie leegmaken?', 'Invoer weggooien')) {
+    return;
+  }
+  pagina.werkplek = {};
+  resetFormulier();
+  element('f-aanvraag').focus();
+}
+
+async function rondBewerkenAf() {
+  await slaOpenFormulierenOp();
+  if (controleerOnderbalkWijzigingen() && !await vraagBevestiging('Nog niet opgeslagen', 'Niet alle wijzigingen zijn opgeslagen. Wil je alleen de niet-opgeslagen invoer weggooien? Reeds opgeslagen wijzigingen blijven behouden.', 'Invoer weggooien')) {
+    return false;
+  }
+  resetFormulier();
+  return true;
+}
+
+async function startRegistratie(event) {
+  event.preventDefault();
+  if (pagina.bewerkRegistratieId) {
+    planOpslaan(element('registration-form'), true);
+    return;
+  }
+  if (pagina.bezig || pagina.laden) {
+    return;
+  }
+  const form = element('registration-form');
+  const errors = controleerFormulier(form);
+  for (const [key, label] of Object.entries({product: 'Selecteer een product.', persenrij: 'Selecteer een persenrij.', oven: 'Selecteer een oven.'})) {
+    if (errors[key]) {
+      errors[key] = label;
+    }
+  }
+  if (Object.keys(errors).length) {
+    toonFouten(form, errors);
+    return;
+  }
+  if (!await magDetailsVerlaten() || pagina.bezig || pagina.laden) {
+    return;
+  }
+  leesConcept();
+  const payload = {status: 'start'};
+  for (const key of ['aanvraag', 'datum', 'product', 'persenrij', 'oven']) {
+    payload[key] = pagina.concept[key];
+  }
+  stelBezigIn(true);
+  try {
+    const result = await apiVerzoek(API_URL, 'POST', payload);
+    pagina.werkplek = {persenrij: payload.persenrij, oven: payload.oven};
+    resetFormulier();
+    verwerkOpgeslagenRegistratie(result.regel, true);
+    element('list-error').textContent = '';
+    toonVerbinding(true);
+    toonMelding('Registratie gestart. Je productiegegevens worden automatisch opgeslagen.', 'success');
+    requestAnimationFrame(function () {
+      return element(`card-${Number(result.id)}`)?.scrollIntoView({block: 'nearest'});
+    });
+  } catch (error) {
+    toonFouten(form, error.errors || {}, error.message);
+    if (!error.status) {
+      element('form-errors').textContent += ' Controleer bij herstel eerst of de registratie al in de lijst staat voordat je opnieuw start.';
+    }
+  } finally {
+    stelBezigIn(false);
+  }
+}
+
+async function verwijderRegel(id) {
+  if(pagina.bezig) {
+    return;
+  }
+  await slaOpenFormulierenOp();
+  const registratie = pagina.details.get(id);
+  if(!registratie) {
+    return;
+  }
+  if(!await vraagBevestiging('Registratie verwijderen', `${registratie.regId} en alle bijbehorende productiegegevens, storingen en historie worden definitief verwijderd.`, 'Definitief verwijderen')) {
+    return;
+  }
+  stelBezigIn(true);
+  try {
+    await apiVerzoek(`${API_URL}?id=${id}`, 'DELETE', {revision: registratie.revision});
+    pagina.ophaalNummer++;
+    // Een oude lijst mag de verwijderde regel niet terugzetten.
+    pagina.regels = pagina.regels.filter(function (registratie) {
+      return Number(registratie.id) !== id;
+    });
+    pagina.details.delete(id);
+    pagina.openRegistratieId = null;
+    if(Number(pagina.vastgezetteRegistratie?.id) === id) {
+      pagina.vastgezetteRegistratie = null;
+    }
+    if(pagina.bewerkRegistratieId === id) {
+      resetFormulier();
+    }
+    toonRegistratieLijst();
+    toonMelding('Registratie verwijderd.', 'success');
+    element('f-aanvraag').focus();
+  } catch(error) {
+    toonMelding(error.message, 'error');
+  } finally {
+    stelBezigIn(false);
+  }
+}
+// Sla formulieren één voor één op. Zo blijven revisies in de juiste volgorde.
+
+// 6. Automatisch opslaan en fouten herstellen
+const OPSLAG_WACHTTIJD = 900;
+
+const VERVERS_INTERVAL = 20000;
+// Map bewaart per formulier één geplande opslag.
+const opslagWachtrij = new Map();
+let opslagTimer = null;
+let lopendeOpslag = null;
+let zoekTimer = null;
+
+function formulierRegistratieId(form) {
+  return Number(form.dataset.production || form.dataset.reason || form.dataset.storing || pagina.bewerkRegistratieId);
+}
+
+function isAutomatischFormulier(form) {
+  return !!form && (form.closest('.regel-detail') || (form.id === 'registration-form' && pagina.bewerkRegistratieId));
+}
+
+function opslagMeldingHtml(message = 'Wijzigingen worden automatisch opgeslagen.') {
+  return `<div class="save-state" data-save-state role="status">${veiligeHtml(message)}</div><div class="save-recovery"><button type="button" class="btn" data-retry-save hidden>Opnieuw proberen</button><button type="button" class="btn" data-reload-record hidden>Actuele gegevens laden</button></div>`;
+}
+
+function toonOpslagStatus(form, stateName, message) {
+  const label = form.querySelector('[data-save-state]');
+  if (label) {
+    label.dataset.state = stateName;
+    label.textContent = message;
+  }
+  const retry = form.querySelector('[data-retry-save]');
+  const reload = form.querySelector('[data-reload-record]');
+  if (retry) {
+    retry.hidden = form.dataset.saveBlocked !== 'network';
+  }
+  if (reload) {
+    reload.hidden = !form.dataset.saveBlocked;
+  }
+}
+
+function planOpslaan(form, immediate = false, forceStoring = false) {
+  if (!isAutomatischFormulier(form)) {
+    return;
+  }
+  heeftWijzigingen(form);
+  controleerDetailWijzigingen();
+  controleerOnderbalkWijzigingen();
+  if (!form.dataset.dirty) {
+    opslagWachtrij.delete(form);
+    if (!form.dataset.saveBlocked && form.querySelector('[data-save-state]')?.dataset.state === 'pending') {
+      wisFouten(form);
+      toonOpslagStatus(form, 'idle', 'Geen wijzigingen.');
+    }
+    return;
+  }
+  if (form.dataset.saveBlocked) {
+    return;
+  }
+  opslagWachtrij.set(form, {due: Date.now() + (immediate ? 0 : OPSLAG_WACHTTIJD), forceStoring});
+  toonOpslagStatus(form, 'pending', form.dataset.storing ? 'Wordt toegevoegd zodra je dit onderdeel verlaat.' : 'Wijzigingen worden opgeslagen…');
+  startOpslagTimer();
+}
+
+function startOpslagTimer() {
+  clearTimeout(opslagTimer);
+  if (lopendeOpslag || !opslagWachtrij.size || pagina.bezig || pagina.laden) {
+    return;
+  }
+  let firstTime = Infinity;
+  for (const job of opslagWachtrij.values()) {
+    if (job.due < firstTime) {
+      firstTime = job.due;
+    }
+  }
+  opslagTimer = setTimeout(voerOpslagUit, Math.max(0, firstTime - Date.now()));
+}
+
+function maakOpslagGegevens(form) {
+  const id = formulierRegistratieId(form);
+  const errors = controleerFormulier(form);
+  const payload = {id, revision: form.dataset.revision};
+  let keys = [];
+  if (form.dataset.production) {
+    const collected = leesProductie(form);
+    keys = collected.keys;
+    const seen = new Set();
+    collected.values.forEach(function (value, index) {
+      const name = value.naam.toLowerCase();
+      if (seen.has(name)) {
+        errors[keys[index].naam] = 'Dit gegeven is al toegevoegd.';
+      }
+      seen.add(name);
+    });
+    Object.assign(payload, {action: 'productie', productwaarden: collected.values});
+  } else if (form.dataset.reason) {
+    Object.assign(payload, {action: 'stilstandreden', reden: element(`reden-${id}`).value, opmerking: element(`opmerking-${id}`).value});
+  } else if (form.dataset.storing) {
+    Object.assign(payload, {action: 'storing', storing: {type: element(`storing-type-${id}`).value, tijdstip: element(`storing-tijd-${id}`).value, duur: element(`storing-duur-${id}`).value}});
+  } else {
+    payload.action = 'details';
+    for (const key of ['aanvraag', 'datum', 'product', 'persenrij', 'oven']) {
+      payload[key] = element(`f-${key}`).value;
+    }
+  }
+  return {payload, errors, keys};
+}
+
+async function slaFormulierOp(form, forceStoring = false) {
+  if (!form.isConnected || !isAutomatischFormulier(form) || !heeftWijzigingen(form) || form.dataset.saveBlocked) {
+    return;
+  }
+  // Een handmatige storing is een nieuwe gebeurtenis. Wacht tot de operator het onderdeel verlaat.
+  if (form.dataset.storing && form.contains(document.activeElement) && !forceStoring) {
+    return;
+  }
+  const {payload, errors, keys} = maakOpslagGegevens(form);
+  if (Object.keys(errors).length) {
+    const incompleteOnly = Object.entries(errors).every(function ([key]) {
+      return [...form.querySelectorAll('[data-key]')].find(function (field) {
+        return field.dataset.key === key;
+      })?.value === '';
+    });
+    if (!incompleteOnly || forceStoring) {
+      toonFouten(form, errors, 'Nog niet opgeslagen: controleer de gemarkeerde velden.', false);
+    }
+    toonOpslagStatus(form, 'pending', 'Nog niet opgeslagen — vul de resterende velden correct in.');
+    return;
+  }
+  wisFouten(form);
+  const snapshot = formulierInhoud(form);
+  toonOpslagStatus(form, 'saving', 'Opslaan…');
+  // Andere formulieren blijven bruikbaar. Alleen de toevoeging van een nieuwe storing wordt kort vergrendeld.
+  if (form.dataset.storing) {
+    form.querySelectorAll('input,select').forEach(function (field) {
+      return field.disabled = true;
+    });
+  }
+  try {
+    const result = await apiVerzoek(API_URL, 'PUT', payload);
+    if (form.id === 'registration-form') {
+      form.dataset.opgeslagenInhoud = snapshot;
+      form.dataset.revision = result.regel.revision;
+      pagina.concept.revision = result.regel.revision;
+    }
+    verwerkOpgeslagenRegistratie(result.regel, false, form, snapshot);
+    toonVerbinding(true);
+    if (form.isConnected) {
+      const stillDirty = heeftWijzigingen(form);
+      toonOpslagStatus(form, stillDirty ? 'pending' : 'saved', stillDirty ? 'Nieuwe invoer wordt opgeslagen…' : 'Opgeslagen');
+      if (stillDirty) {
+        planOpslaan(form);
+      }
+    }
+  } catch (error) {
+    const mapped = {};
+    for (const [key, message] of Object.entries(error.errors || {})) {
+      const match = key.match(/^productwaarden\.(\d+)\.(naam|waarde)$/);
+      mapped[match ? keys[Number(match[1])]?.[match[2]] || key : key] = message;
+    }
+    form.dataset.saveBlocked = error.status === 409 ? 'conflict' : error.status === 422 ? 'validation' : 'network';
+    toonFouten(form, mapped, error.message, false);
+    const message = error.status === 409 ? 'Niet opgeslagen — de registratie is elders gewijzigd. Je invoer blijft staan.' : 'Niet opgeslagen — je invoer blijft staan.';
+    toonOpslagStatus(form, 'error', message);
+    if (!error.status) {
+      toonVerbinding(false);
+    }
+    // Geen stilzwijgende herhaling van een toevoeging: dat kan een dubbele storing veroorzaken.
+    if (form.dataset.storing && !error.status) {
+      toonOpslagStatus(form, 'error', 'Bevestiging ontbreekt. Controleer eerst de actuele storingen voordat je opnieuw probeert.');
+    }
+  } finally {
+    if (form.dataset.storing) {
+      form.querySelectorAll('input,select').forEach(function (field) {
+        return field.disabled = false;
+      });
+    }
+    controleerDetailWijzigingen();
+    controleerOnderbalkWijzigingen();
+  }
+}
+
+async function verwerkOpslagWachtrij() {
+  for (const [form, job] of opslagWachtrij) {
+    if (job.due > Date.now()) {
+      continue;
+    }
+    opslagWachtrij.delete(form);
+    await slaFormulierOp(form, job.forceStoring);
+  }
+}
+
+async function voerOpslagUit() {
+  if (lopendeOpslag || pagina.bezig || pagina.laden) {
+    return lopendeOpslag;
+  }
+  lopendeOpslag = verwerkOpslagWachtrij();
+  try {
+    await lopendeOpslag;
+  } finally {
+    lopendeOpslag = null;
+    startOpslagTimer();
+  }
+}
+
+async function wachtOpOpslag() {
+  if (lopendeOpslag) {
+    await lopendeOpslag;
+  }
+}
+
+async function slaOpenFormulierenOp() {
+  clearTimeout(opslagTimer);
+  await wachtOpOpslag();
+  const forms = [...document.querySelectorAll('.regel-detail form'), ...(pagina.bewerkRegistratieId ? [element('registration-form')] : [])];
+  forms.forEach(function (form) {
+    return planOpslaan(form, true, true);
+  });
+  await voerOpslagUit();
+}
+
+function toonVerbinding(online) {
+  element('connection-status').textContent = online ? 'Actueel · automatisch bijgewerkt' : 'Verbinding onderbroken';
+  element('connection-status').classList.toggle('offline', !online);
+}
+
+function magVerversen() {
+  return !document.hidden && !pagina.bezig && !pagina.laden && !lopendeOpslag && !opslagWachtrij.size && !bevestigingOpen &&
+  !controleerDetailWijzigingen() && !(pagina.bewerkRegistratieId && controleerOnderbalkWijzigingen()) &&
+  !document.activeElement?.matches('input,select,textarea');
+}
+
+async function verversOpAchtergrond() {
+  if (pagina.verversen || !magVerversen()) {
+    return;
+  }
+  pagina.verversen = true;
+  const request = pagina.ophaalNummer;
+  const filters = pagina.filters || leesFilters();
+  const params = new URLSearchParams(filters);
+  if(pagina.cursor) {
+    params.set('before', pagina.cursor);
+  }
+  const expanded = pagina.openRegistratieId;
+  try {
+    const result = await apiVerzoek(`${API_URL}?${params}`);
+    const detail = expanded ? await apiVerzoek(`${API_URL}?id=${expanded}`).catch(function (error) {
+      return error.status === 404 ? null : Promise.reject(error);
+    }) : null;
+    if(request !== pagina.ophaalNummer || expanded !== pagina.openRegistratieId || !magVerversen()) {
+      return;
+    }
+    const signature = function (rows) {
+      return JSON.stringify(rows.map(function (registratie) {
+        return [registratie.id, registratie.regId, registratie.aanvraag, registratie.datum, registratie.product, registratie.persenrij, registratie.oven, registratie.status, registratie.aangemaakt];
+      }));
+    };
+    const changed = signature(pagina.regels) !== signature(result.regels) || pagina.totaal !== result.totalFiltered || (detail && detail.regel.revision !== pagina.details.get(expanded)?.revision);
+    pagina.totaal = result.totalFiltered;
+    pagina.vandaag = result.today;
+    pagina.heeftMeer = result.hasMore;
+    pagina.volgendeCursor = result.nextCursor;
+    if(changed || (expanded && !detail)) {
+      const anchor = expanded ? element(`card-${expanded}`) : null;
+      const top = anchor?.getBoundingClientRect().top;
+      pagina.regels = result.regels;
+      if(detail) {
+        pagina.details.set(expanded, detail.regel);
+        if(Number(pagina.vastgezetteRegistratie?.id) === expanded) {
+          pagina.vastgezetteRegistratie = detail.regel;
+        }
+      } else if(expanded) {
+        pagina.openRegistratieId = null;
+        pagina.details.delete(expanded);
+        if(Number(pagina.vastgezetteRegistratie?.id) === expanded){
+          pagina.vastgezetteRegistratie = null;
+        }
+      }
+      // Bij een open registratie buiten de vernieuwde selectie blijft het laatst geopende object zichtbaar.
+      if(detail && !pagina.regels.some(function (registratie) {
+        return Number(registratie.id) === expanded;
+      })) {
+        pagina.vastgezetteRegistratie = detail.regel;
+      }
+      toonRegistratieLijst();
+      if (detail && pagina.bewerkRegistratieId === expanded && !controleerOnderbalkWijzigingen()) {
+        pagina.concept = {...detail.regel};
+        toonOnderbalk();
+      }
+      if(top !== undefined && element(`card-${expanded}`)) {
+        window.scrollBy(0, element(`card-${expanded}`).getBoundingClientRect().top - top);
+      }
+    }
+    werkPagineringBij();
+    element('list-error').textContent = '';
+    toonVerbinding(true);
+    if(!pagina.bewerkRegistratieId && !controleerOnderbalkWijzigingen()) {
+      element('f-datum').value = vandaag();
+      pagina.concept.datum = vandaag();
+      markeerOpgeslagen(element('registration-form'));
+    }
+  } catch(error) {
+    toonVerbinding(false);
+  } finally {
+    pagina.verversen = false;
+  }
+}
+
+async function laadActueleRegistratie(form) {
+  if (pagina.bezig || pagina.laden) {
+    return;
+  }
+  await wachtOpOpslag();
+  if(!await vraagBevestiging('Actuele gegevens laden', 'Wil je de niet-opgeslagen invoer van dit onderdeel weggooien en de actuele registratie laden?', 'Invoer weggooien')){
+    return;
+  }
+  const id = formulierRegistratieId(form);
+  try {
+    const {regel} = await apiVerzoek(`${API_URL}?id=${id}`);
+    opslagWachtrij.delete(form);
+    if(form.id === 'registration-form') {
+      pagina.concept = {...regel};
+      toonOnderbalk();
+    } else {
+      markeerOpgeslagen(form);
+      form.remove();
+    }
+    verwerkOpgeslagenRegistratie(regel, false, null, null, false);
+  } catch(error) {
+    toonMelding(error.message, 'error');
+  }
+}
+/* Eén set events voor alle kaarten. Opslagmeldingen blijven bij het betreffende formulier. */
+// 7. Knoppen en invoer koppelen aan functies
+element('main').addEventListener('click', async function (event) {
+  const target = event.target.closest('button');
+  if(!target || pagina.bezig || pagina.laden){
+    return;
+  }
+  if(target.dataset.expand){
+    return wisselRegistratieOpen(Number(target.dataset.expand));
+  }
+  if(target.dataset.edit){
+    return startBewerken(Number(target.dataset.edit));
+  }
+  if(target.dataset.status){
+    return wijzigStatus(Number(target.dataset.id), target.dataset.status);
+  }
+  if(target.dataset.delete){
+    return verwijderRegel(Number(target.dataset.delete));
+  }
+  if(target.hasAttribute('data-add-value')) {
+    const form = target.closest('form');
+    form.querySelector('[data-extra-values]').insertAdjacentHTML('beforeend', waardeRowHtml());
+    planOpslaan(form);
+    form.querySelector('[data-extra-values] .repeat-row:last-child [data-name]').focus();
+  }
+  if(target.hasAttribute('data-remove-value')) {
+    const form = target.closest('form');
+    target.closest('.repeat-row').remove();
+    planOpslaan(form);
+  }
+});
+document.addEventListener('click', function (event) {
+  const retry = event.target.closest('[data-retry-save]');
+  const reload = event.target.closest('[data-reload-record]');
+  if(retry) {
+    const form = retry.closest('form');
+    delete form.dataset.saveBlocked;
+    planOpslaan(form, true, true);
+  }
+  if(reload) {
+    laadActueleRegistratie(reload.closest('form'));
+  }
+});
+
+function verwerkInvoer(event) {
+  const form = event.target.closest('form');
+  if(!form){
+    return;
+  }
+  if(form.dataset.saveBlocked === 'validation'){
+    delete form.dataset.saveBlocked;
+  }
+  if(form.id === 'registration-form') {
+    leesConcept();
+    controleerOnderbalkWijzigingen();
+  }
+  planOpslaan(form);
+}
+for(const eventName of ['input', 'change']) {
+  element('main').addEventListener(eventName, verwerkInvoer);
+  element('form-footer-body').addEventListener(eventName, verwerkInvoer);
+}
+document.addEventListener('focusout', function (event) {
+  const form = event.target.closest('form');
+  if(!isAutomatischFormulier(form)){
+    return;
+  }
+  setTimeout(function () {
+    if(form.isConnected && !form.contains(document.activeElement)){
+      planOpslaan(form, true, true);
+    }
+  }, 0);
+});
+element('main').addEventListener('submit', function (event) {
+  event.preventDefault();
+  planOpslaan(event.target, true, true);
+});
+element('form-footer-body').addEventListener('submit', startRegistratie);
+element('form-footer-body').addEventListener('click', function (event) {
+  if(event.target.closest('#clear-btn')){
+    maakNieuweInvoerLeeg();
+  }
+  if(event.target.closest('#done-btn')){
+    rondBewerkenAf();
+  }
+});
+element('search-input').addEventListener('input', function () {
+  clearTimeout(zoekTimer);
+  zoekTimer = setTimeout(function () {
+    return laadRegistraties(null, [], true);
+  }, 300);
+});
+for(const id of ['status-filter', 'period-filter', 'date-from', 'date-to']) {
+  element(id).addEventListener('change', function () {
+    clearTimeout(zoekTimer);
+    element('custom-period').hidden = element('period-filter').value !== 'aangepast';
+    laadRegistraties(null, [], true);
+  });
+}
+element('show-all').onclick = function () {
+  element('search-input').value = '';
+  element('status-filter').value = '';
+  element('period-filter').value = 'alles';
+  element('custom-period').hidden = true;
+  clearTimeout(zoekTimer);
+  return laadRegistraties(null, [], true);
+};
+element('next-page').onclick = function () {
+  return laadRegistraties(pagina.volgendeCursor, [...pagina.vorigePaginas, pagina.cursor], true);
+};
+element('prev-page').onclick = function () {
+  const previous = [...pagina.vorigePaginas];
+  const cursor = previous.pop();
+  laadRegistraties(cursor, previous, true);
+};
+window.addEventListener('beforeunload', function (event) {
+  if(controleerOnderbalkWijzigingen() || controleerDetailWijzigingen() || pagina.bezig || lopendeOpslag){
+    event.preventDefault();
+    event.returnValue = '';
+  }
+});
+window.addEventListener('offline', function () {
+  return toonVerbinding(false);
+});
+window.addEventListener('online', function () {
+  return verversOpAchtergrond();
+});
+document.addEventListener('visibilitychange', function () {
+  if(!document.hidden){
+    verversOpAchtergrond();
+  }
+});
+new ResizeObserver(function () {
+  return document.documentElement.style.setProperty('--footer-height', `${element('registratie-form-sectie').getBoundingClientRect().height}px`);
+}).observe(element('registratie-form-sectie'));
+pagina.concept = nieuwConcept();
+element('date-from').value = vandaag();
+element('date-to').value = vandaag();
+toonOnderbalk();
+laadRegistraties().then(function () {
+  if(!pagina.onderbalkGewijzigd && !pagina.bewerkRegistratieId){
+    pagina.concept.datum = vandaag();
+    element('f-datum').value = pagina.concept.datum;
+    markeerOpgeslagen(element('registration-form'));
+    controleerOnderbalkWijzigingen();
+  }
+});
+setInterval(verversOpAchtergrond, VERVERS_INTERVAL);
+</script>
+</body>
+</html>
